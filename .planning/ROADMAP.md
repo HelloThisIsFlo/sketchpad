@@ -22,13 +22,15 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 1: Infrastructure
 **Goal**: A reachable HTTPS public endpoint exists, Kubernetes storage is provisioned and bound, and all secrets are in place — ready to host the MCP server with zero infrastructure surprises
 **Depends on**: Nothing (first phase)
-**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06, DOCS-02, DOCS-03
 **Success Criteria** (what must be TRUE):
   1. `kubectl get storageclass` shows a working StorageClass and `kubectl get pvc` shows the sketchpad PVC as Bound
   2. `kubectl get secret` shows GitHub OAuth App credentials, Cloudflare tunnel token, and any encryption keys present in the target namespace
   3. `curl -I https://<public-hostname>/` returns an HTTP response (any status) — the Cloudflare Tunnel is routing traffic to the cluster
   4. Container image is pushed to a registry and `kubectl` can pull it (confirmed by a test pod or the deployment in Phase 3)
   5. cloudflared Deployment is Running and logs show an active tunnel connection to Cloudflare
+  6. `docs/github-oauth-app.md` exists with step-by-step guide for creating the GitHub OAuth App
+  7. `docs/cloudflare-tunnel.md` exists with config snippet and hostname setup instructions
 **Plans**: TBD
 
 ### Phase 2: MCP Server + OAuth
@@ -46,12 +48,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 3: Deploy + Integration
 **Goal**: The MCP server runs on Kubernetes, is reachable via Cloudflare Tunnel over HTTPS, and Claude AI (via Claude Code CLI) completes the full OAuth handshake and can call both file tools
 **Depends on**: Phase 2
-**Requirements**: E2E-01, E2E-02, E2E-03
+**Requirements**: E2E-01, E2E-02, E2E-03, DOCS-01, DOCS-04
 **Success Criteria** (what must be TRUE):
   1. Claude Code CLI adds the server as a remote integration and completes the OAuth flow (GitHub login, redirect back, token issued) without errors
   2. Claude AI (via CLI) can call `read_file` and the result appears in the conversation
   3. Claude AI (via CLI) can call `write_file` with new text and a subsequent `read_file` call in the same conversation returns the updated content
   4. After restarting the pod (`kubectl rollout restart deployment/sketchpad`), a new Claude conversation can read the content written in a previous conversation
+  5. `docs/` folder exists with index and all guides; `docs/claude-ai-setup.md` covers adding the integration on phone
 **Plans**: TBD
 
 ### Phase 4: Hardening

@@ -50,6 +50,13 @@ Requirements for the spike. Each maps to roadmap phases.
 - [ ] **SEC-01**: Server validates Origin header on incoming requests (DNS rebinding protection)
 - [ ] **SEC-02**: Only authenticated requests can access MCP tools (no anonymous tool calls)
 
+### Documentation
+
+- [ ] **DOCS-01**: `docs/` folder exists with an index and step-by-step guides for all manual setup steps
+- [ ] **DOCS-02**: Guide for creating the GitHub OAuth App (exact URLs, what to enter, what to copy back)
+- [ ] **DOCS-03**: Guide for configuring Cloudflare Tunnel to point at the sketchpad service (config snippet, hostname setup)
+- [ ] **DOCS-04**: Guide for adding the server as a Claude AI Integration on phone (exact steps in the app)
+
 ### End-to-End
 
 - [ ] **E2E-01**: User can read the sketchpad from Claude AI on their phone
@@ -111,13 +118,17 @@ Deferred to the Obsidian vault server project.
 | INFRA-06 | Phase 1 | Pending |
 | SEC-01 | Phase 4 | Pending |
 | SEC-02 | Phase 4 | Pending |
+| DOCS-01 | Phase 3 | Pending |
+| DOCS-02 | Phase 1 | Pending |
+| DOCS-03 | Phase 1 | Pending |
+| DOCS-04 | Phase 3 | Pending |
 | E2E-01 | Phase 3 | Pending |
 | E2E-02 | Phase 3 | Pending |
 | E2E-03 | Phase 3 | Pending |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 28
+- v1 requirements: 32 total
+- Mapped to phases: 32
 - Unmapped: 0
 
 ---

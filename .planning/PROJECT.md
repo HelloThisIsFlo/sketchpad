@@ -46,7 +46,7 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 
 **K8s experience level:** Beginner. Manifests should be explicit and well-commented. May need to check/create a StorageClass for PVC.
 
-**Execution environment:** `kubectl` on this machine talks to the Talos cluster. Container images go to GitHub Container Registry (ghcr.io). Claude can apply manifests, create secrets, build/push images directly.
+**Execution environment:** `kubectl` on this machine talks to the Talos cluster. Container images go to GitHub Container Registry (ghcr.io) as a public repo. Claude can apply manifests, create secrets, build/push images directly. **Namespace constraint:** Stay in a dedicated namespace (e.g. `sketchpad`). Don't touch anything outside it. If things break, user deletes the namespace and starts over.
 
 **Autonomy preference:** Make standard decisions autonomously. User doesn't want to make choices — just the most standard, boring approach that works. Only pause for things that physically require the user (GitHub OAuth App creation, Cloudflare dashboard config, phone testing).
 
