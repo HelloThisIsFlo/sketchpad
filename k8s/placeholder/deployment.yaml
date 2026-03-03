@@ -1,0 +1,95 @@
+# Placeholder Deployment
+# =======================
+# A temporary nginx pod that returns a JSON health check response.
+# This proves the full tunnel chain works (cloudflared -> Service -> Pod)
+# before the real MCP server is deployed in Phase 2.
+#
+# After Phase 2, this placeholder is replaced by the actual sketchpad
+# Deployment. The Service stays the same (it selects on app: sketchpad).
+#
+# This file contains three resources separated by ---:
+#   1. ConfigMap: nginx config that returns JSON on all paths
+#   2. Deployment: nginx pod using the ConfigMap
+#   3. Service: ClusterIP service that cloudflared routes to
+
+# --- ConfigMap ---
+# Custom nginx config that returns a JSON health check instead of
+# the default nginx welcome page. This makes it easy to verify
+# the tunnel is working: curl should return JSON, not HTML.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: placeholder-config
+  namespace: sketchpad
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        default_type application/json;
+        return 200 '{"status":"ok","service":"sketchpad","phase":"infrastructure-placeholder"}';
+      }
+    }
+---
+# --- Deployment ---
+# The placeholder pod itself. Note the label app: sketchpad -- this is
+# critical because the Service (below) selects pods with this label,
+# and cloudflared routes traffic to that Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sketchpad-placeholder
+  namespace: sketchpad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sketchpad
+  template:
+    metadata:
+      labels:
+        # IMPORTANT: This label must match the Service selector below.
+        # cloudflared routes to the Service, which finds pods via this label.
+        app: sketchpad
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          # Mount the custom nginx config from the ConfigMap.
+          # subPath mounts just the single file, not the entire ConfigMap
+          # as a directory (which would hide other files in conf.d/).
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: config
+          configMap:
+            name: placeholder-config
+---
+# --- Service ---
+# ClusterIP Service that cloudflared routes traffic to.
+# The service name "sketchpad" in namespace "sketchpad" creates the
+# internal DNS name: sketchpad.sketchpad.svc.cluster.local
+#
+# In the Cloudflare Tunnel dashboard, the service URL is configured as:
+#   http://sketchpad.sketchpad.svc.cluster.local:80
+apiVersion: v1
+kind: Service
+metadata:
+  name: sketchpad
+  namespace: sketchpad
+spec:
+  # ClusterIP means this Service is only reachable from inside the cluster.
+  # cloudflared (running in the cluster) can reach it; the internet cannot.
+  type: ClusterIP
+  selector:
+    # Selects pods with label app: sketchpad (the placeholder Deployment above).
+    # When the real MCP server replaces the placeholder in Phase 2,
+    # it must also have this label for the Service to route to it.
+    app: sketchpad
+  ports:
+    - port: 80
+      targetPort: 80

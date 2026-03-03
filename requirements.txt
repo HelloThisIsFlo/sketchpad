@@ -1,0 +1,2 @@
+# Python dependencies for the sketchpad MCP server.
+# Phase 2 will add: fastmcp, cryptography, etc.

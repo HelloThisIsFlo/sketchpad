@@ -1,0 +1,71 @@
+# cloudflared Deployment
+# =======================
+# Runs the Cloudflare Tunnel connector inside the cluster.
+# This creates a secure outbound connection to Cloudflare's edge,
+# allowing internet traffic to reach services in this namespace
+# without exposing any inbound ports on your network.
+#
+# The tunnel configuration (which hostnames route to which services)
+# is managed in the Cloudflare Zero Trust dashboard, not here.
+# This pod only needs the tunnel token to connect.
+#
+# See docs/cloudflare-tunnel.md for setup instructions.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: sketchpad
+  labels:
+    app: cloudflared
+spec:
+  # Single replica is sufficient -- Cloudflare handles failover at the edge.
+  # If this pod restarts, traffic queues briefly at Cloudflare until it reconnects.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+    spec:
+      containers:
+        - name: cloudflared
+          # Pin to a specific version to avoid unexpected breaking changes on pod restart.
+          # Check https://hub.docker.com/r/cloudflare/cloudflared/tags for newer versions.
+          image: cloudflare/cloudflared:2026.2.0
+          args:
+            - tunnel
+            # Disable auto-update -- K8s manages the container image version.
+            - --no-autoupdate
+            # Enable metrics endpoint for the liveness probe.
+            - --metrics
+            - 0.0.0.0:2000
+            # "run" tells cloudflared to connect using the TUNNEL_TOKEN env var.
+            - run
+          env:
+            # The tunnel token is stored in a Kubernetes Secret.
+            # See k8s/secrets/README.md for how to create it.
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflared-tunnel-token
+                  key: token
+          # Liveness probe: cloudflared exposes a /ready endpoint on the metrics port.
+          # If the tunnel connection drops, this probe will fail and K8s will restart the pod.
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 2000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          # Resource limits keep cloudflared from consuming too much.
+          # These are generous for a single-tunnel setup.
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

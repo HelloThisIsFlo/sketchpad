@@ -1,0 +1,10 @@
+# Namespace: sketchpad
+# =====================
+# All sketchpad resources live in this namespace.
+# This provides isolation from other workloads on the cluster.
+# If something goes wrong, you can delete the entire namespace
+# and start over: kubectl delete namespace sketchpad
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sketchpad

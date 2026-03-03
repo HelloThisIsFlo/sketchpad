@@ -1,0 +1,48 @@
+# PersistentVolumeClaims
+# ======================
+# Two PVCs for persistent storage, both backed by NFS via the
+# nfs-subdir-external-provisioner. The provisioner automatically
+# creates subdirectories on the Synology NAS (/volume1/k8s/).
+#
+# Data on NFS survives:
+#   - Pod restarts
+#   - Deployment updates
+#   - Cluster teardown and rebuild (data lives on the NAS)
+#
+# The reclaimPolicy is set to Retain on the StorageClass,
+# so even deleting the PVC won't delete the underlying data.
+
+# PVC 1: sketchpad-data
+# Stores the sketchpad file itself (the single file that Claude reads/writes).
+# Mounted by the MCP server Deployment in Phase 2.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sketchpad-data
+  namespace: sketchpad
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-client
+  resources:
+    requests:
+      # 1Gi is far more than needed for a single text file,
+      # but NFS doesn't actually pre-allocate this space.
+      storage: 1Gi
+---
+# PVC 2: sketchpad-state
+# Stores OAuth state (tokens, session data) for persistence across
+# pod restarts. Used by the FileTreeStore + FernetEncryptionWrapper
+# in the MCP server (Phase 2).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sketchpad-state
+  namespace: sketchpad
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 1Gi
