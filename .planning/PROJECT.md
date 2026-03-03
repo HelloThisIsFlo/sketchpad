@@ -46,6 +46,16 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 
 **K8s experience level:** Beginner. Manifests should be explicit and well-commented. May need to check/create a StorageClass for PVC.
 
+**Execution environment:** `kubectl` on this machine talks to the Talos cluster. Container images go to GitHub Container Registry (ghcr.io). Claude can apply manifests, create secrets, build/push images directly.
+
+**Autonomy preference:** Make standard decisions autonomously. User doesn't want to make choices — just the most standard, boring approach that works. Only pause for things that physically require the user (GitHub OAuth App creation, Cloudflare dashboard config, phone testing).
+
+## Manual Steps (User Must Do)
+
+1. **Create GitHub OAuth App** — GitHub → Settings → Developer settings → OAuth Apps → New. Set callback URL to `https://<hostname>/github/callback`. Provide `client_id` and `client_secret` back.
+2. **Configure Cloudflare Tunnel hostname** — Point a subdomain (e.g. `sketchpad.yourdomain.com`) at the sketchpad K8s Service. Instructions provided in Phase 1.
+3. **Test from phone** — Open Claude AI app, add the integration, read/write the sketchpad.
+
 ## Constraints
 
 - **Auth protocol**: OAuth 2.1 with DCR and PKCE — required by Claude AI's Integration protocol
