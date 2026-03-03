@@ -86,40 +86,40 @@ Deferred to the Obsidian vault server project.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISC-01 | — | Pending |
-| DISC-02 | — | Pending |
-| DISC-03 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| AUTH-07 | — | Pending |
-| MCP-01 | — | Pending |
-| MCP-02 | — | Pending |
-| MCP-03 | — | Pending |
-| MCP-04 | — | Pending |
-| MCP-05 | — | Pending |
-| TOOL-01 | — | Pending |
-| TOOL-02 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
-| INFRA-06 | — | Pending |
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| E2E-01 | — | Pending |
-| E2E-02 | — | Pending |
-| E2E-03 | — | Pending |
+| DISC-01 | Phase 2 | Pending |
+| DISC-02 | Phase 2 | Pending |
+| DISC-03 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Pending |
+| AUTH-02 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Pending |
+| AUTH-05 | Phase 2 | Pending |
+| AUTH-06 | Phase 2 | Pending |
+| AUTH-07 | Phase 2 | Pending |
+| MCP-01 | Phase 2 | Pending |
+| MCP-02 | Phase 2 | Pending |
+| MCP-03 | Phase 2 | Pending |
+| MCP-04 | Phase 2 | Pending |
+| MCP-05 | Phase 2 | Pending |
+| TOOL-01 | Phase 2 | Pending |
+| TOOL-02 | Phase 2 | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| INFRA-05 | Phase 1 | Pending |
+| INFRA-06 | Phase 1 | Pending |
+| SEC-01 | Phase 4 | Pending |
+| SEC-02 | Phase 4 | Pending |
+| E2E-01 | Phase 3 | Pending |
+| E2E-02 | Phase 3 | Pending |
+| E2E-03 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28 (awaiting roadmap)
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-02*
-*Last updated: 2026-03-02 after initial definition*
+*Last updated: 2026-03-02 after roadmap creation*
