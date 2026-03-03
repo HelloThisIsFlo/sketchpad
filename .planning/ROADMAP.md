@@ -77,7 +77,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure | 0/2 | Planning complete | - |
+| 1. Infrastructure | 1/2 | In Progress | - |
 | 2. MCP Server + OAuth | 0/TBD | Not started | - |
 | 3. Deploy + Integration | 0/TBD | Not started | - |
 | 4. Hardening | 0/TBD | Not started | - |

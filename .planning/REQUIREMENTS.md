@@ -38,12 +38,12 @@ Requirements for the spike. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Server is deployed as a Kubernetes Deployment with a ClusterIP Service
-- [ ] **INFRA-02**: Sketchpad file persists across pod restarts via PersistentVolumeClaim
-- [ ] **INFRA-03**: OAuth state (tokens, registrations, auth codes) persists across pod restarts via PVC-backed store
-- [ ] **INFRA-04**: GitHub OAuth App credentials and other secrets stored as Kubernetes Secrets
-- [ ] **INFRA-05**: Server is accessible over HTTPS via Cloudflare Tunnel
-- [ ] **INFRA-06**: Container image is built and pushed to a registry accessible by the cluster
+- [x] **INFRA-01**: Server is deployed as a Kubernetes Deployment with a ClusterIP Service
+- [x] **INFRA-02**: Sketchpad file persists across pod restarts via PersistentVolumeClaim
+- [x] **INFRA-03**: OAuth state (tokens, registrations, auth codes) persists across pod restarts via PVC-backed store
+- [x] **INFRA-04**: GitHub OAuth App credentials and other secrets stored as Kubernetes Secrets
+- [x] **INFRA-05**: Server is accessible over HTTPS via Cloudflare Tunnel
+- [x] **INFRA-06**: Container image is built and pushed to a registry accessible by the cluster
 
 ### Security
 
@@ -53,8 +53,8 @@ Requirements for the spike. Each maps to roadmap phases.
 ### Documentation
 
 - [ ] **DOCS-01**: `docs/` folder exists with an index and step-by-step guides for all manual setup steps
-- [ ] **DOCS-02**: Guide for creating the GitHub OAuth App (exact URLs, what to enter, what to copy back)
-- [ ] **DOCS-03**: Guide for configuring Cloudflare Tunnel to point at the sketchpad service (config snippet, hostname setup)
+- [x] **DOCS-02**: Guide for creating the GitHub OAuth App (exact URLs, what to enter, what to copy back)
+- [x] **DOCS-03**: Guide for configuring Cloudflare Tunnel to point at the sketchpad service (config snippet, hostname setup)
 - [ ] **DOCS-04**: Guide for adding the server as a Claude AI Integration on phone (exact steps in the app)
 
 ### End-to-End
@@ -110,17 +110,17 @@ Deferred to the Obsidian vault server project.
 | MCP-05 | Phase 2 | Pending |
 | TOOL-01 | Phase 2 | Pending |
 | TOOL-02 | Phase 2 | Pending |
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
-| INFRA-04 | Phase 1 | Pending |
-| INFRA-05 | Phase 1 | Pending |
-| INFRA-06 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
+| INFRA-03 | Phase 1 | Complete |
+| INFRA-04 | Phase 1 | Complete |
+| INFRA-05 | Phase 1 | Complete |
+| INFRA-06 | Phase 1 | Complete |
 | SEC-01 | Phase 4 | Pending |
 | SEC-02 | Phase 4 | Pending |
 | DOCS-01 | Phase 3 | Pending |
-| DOCS-02 | Phase 1 | Pending |
-| DOCS-03 | Phase 1 | Pending |
+| DOCS-02 | Phase 1 | Complete |
+| DOCS-03 | Phase 1 | Complete |
 | DOCS-04 | Phase 3 | Pending |
 | E2E-01 | Phase 3 | Pending |
 | E2E-02 | Phase 3 | Pending |

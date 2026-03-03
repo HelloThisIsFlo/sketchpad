@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-03T19:29:30.871Z"
-last_activity: 2026-03-02 — Roadmap created, all 28 requirements mapped to 4 phases
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-03T21:01:52.542Z"
+last_activity: 2026-03-03 — Completed Plan 01-01 (K8s manifests, Dockerfile, docs)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -26,28 +26,28 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 ## Current Position
 
 Phase: 1 of 4 (Infrastructure)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-02 — Roadmap created, all 28 requirements mapped to 4 phases
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-03 — Completed Plan 01-01 (K8s manifests, Dockerfile, docs)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 1
+- Average duration: 4min
+- Total execution time: 4min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 1. Infrastructure | 1/2 | 4min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: —
-- Trend: —
+- Last 5 plans: 01-01 (4min)
+- Trend: First plan
 
 *Updated after each plan completion*
 
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - [Init]: FileTreeStore + FernetEncryptionWrapper for OAuth state persistence (no Redis sidecar)
 - [Init]: Claude Code CLI is the primary test client — Claude.ai web has a known about:blank bug (issue #11814)
 - [Init]: local-path-provisioner required for Talos OS StorageClass — verify with `kubectl get storageclass` first
+- [Phase 01-01]: Two separate PVCs (sketchpad-data, sketchpad-state) rather than shared PVC with subPaths
+- [Phase 01-01]: JSON health check response for nginx placeholder (programmatically verifiable)
+- [Phase 01-01]: ConfigMap-mounted nginx config with subPath to avoid hiding other conf.d files
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-03T19:29:30.868Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-hardening/04-CONTEXT.md
+Last session: 2026-03-03T21:01:52.540Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
