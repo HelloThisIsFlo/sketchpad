@@ -31,7 +31,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. cloudflared Deployment is Running and logs show an active tunnel connection to Cloudflare
   6. `docs/github-oauth-app.md` exists with step-by-step guide for creating the GitHub OAuth App
   7. `docs/cloudflare-tunnel.md` exists with config snippet and hostname setup instructions
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Create all K8s manifests, Dockerfile, and documentation guides
+- [ ] 01-02-PLAN.md — Deploy infrastructure to cluster and verify end-to-end
 
 ### Phase 2: MCP Server + OAuth
 **Goal**: A locally running FastMCP server correctly implements the full OAuth 2.1 protocol and file tools — every endpoint responds correctly when hit with curl or MCP Inspector before any Kubernetes complexity is involved
@@ -74,7 +77,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure | 0/TBD | Not started | - |
+| 1. Infrastructure | 0/2 | Planning complete | - |
 | 2. MCP Server + OAuth | 0/TBD | Not started | - |
 | 3. Deploy + Integration | 0/TBD | Not started | - |
 | 4. Hardening | 0/TBD | Not started | - |
