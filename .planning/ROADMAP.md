@@ -12,7 +12,7 @@ Sketchpad proves the full Claude AI integration chain works before building anyt
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Infrastructure** - Kubernetes namespace, Secrets, StorageClass, PVC, and Cloudflare Tunnel yielding a reachable HTTPS endpoint
+- [x] **Phase 1: Infrastructure** - Kubernetes namespace, Secrets, StorageClass, PVC, and Cloudflare Tunnel yielding a reachable HTTPS endpoint
 - [ ] **Phase 2: MCP Server + OAuth** - FastMCP server with GitHubProvider, OAuth endpoints, file tools — built and validated locally
 - [ ] **Phase 3: Deploy + Integration** - Server deployed to cluster and full OAuth handshake confirmed from Claude AI
 - [ ] **Phase 4: Hardening** - Origin validation and security controls applied to the running server
@@ -33,8 +33,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   7. `docs/cloudflare-tunnel.md` exists with config snippet and hostname setup instructions
 **Plans:** 2 plans
 Plans:
-- [ ] 01-01-PLAN.md — Create all K8s manifests, Dockerfile, and documentation guides
-- [ ] 01-02-PLAN.md — Deploy infrastructure to cluster and verify end-to-end
+- [x] 01-01-PLAN.md — Create all K8s manifests, Dockerfile, and documentation guides
+- [x] 01-02-PLAN.md — Deploy infrastructure to cluster and verify end-to-end
 
 ### Phase 2: MCP Server + OAuth
 **Goal**: A locally running FastMCP server correctly implements the full OAuth 2.1 protocol and file tools — every endpoint responds correctly when hit with curl or MCP Inspector before any Kubernetes complexity is involved
@@ -77,7 +77,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure | 1/2 | In Progress | - |
+| 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 2. MCP Server + OAuth | 0/TBD | Not started | - |
 | 3. Deploy + Integration | 0/TBD | Not started | - |
 | 4. Hardening | 0/TBD | Not started | - |
