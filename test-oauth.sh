@@ -65,7 +65,12 @@ check_not_empty "registration_endpoint present" "$REG_ENDPOINT"
 
 echo ""
 echo "Fetching /.well-known/oauth-protected-resource ..."
-PR_META=$(curl -sf "$SERVER/.well-known/oauth-protected-resource")
+if ! PR_META=$(curl -sf "$SERVER/.well-known/oauth-protected-resource"); then
+    echo "  FAIL: /.well-known/oauth-protected-resource returned non-200 (endpoint missing?)"
+    echo ""
+    echo "=== ABORTED: DISC-02 is a required endpoint ==="
+    exit 1
+fi
 echo "$PR_META" | jq .
 
 RESOURCE=$(echo "$PR_META" | jq -r '.resource // empty')
