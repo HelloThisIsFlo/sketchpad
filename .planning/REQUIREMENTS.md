@@ -59,9 +59,9 @@ Requirements for the spike. Each maps to roadmap phases.
 
 ### End-to-End
 
-- [ ] **E2E-01**: User can read the sketchpad from Claude AI on their phone
-- [ ] **E2E-02**: User can write to the sketchpad from Claude AI on their phone
-- [ ] **E2E-03**: Data written in one conversation persists and is readable in a new conversation
+- [x] **E2E-01**: User can read the sketchpad from Claude AI on their phone
+- [x] **E2E-02**: User can write to the sketchpad from Claude AI on their phone
+- [x] **E2E-03**: Data written in one conversation persists and is readable in a new conversation
 
 ## v2 Requirements
 
@@ -122,9 +122,9 @@ Deferred to the Obsidian vault server project.
 | DOCS-02 | Phase 1 | Complete |
 | DOCS-03 | Phase 1 | Complete |
 | DOCS-04 | Phase 3 | Pending |
-| E2E-01 | Phase 3 | Pending |
-| E2E-02 | Phase 3 | Pending |
-| E2E-03 | Phase 3 | Pending |
+| E2E-01 | Phase 3 | Complete |
+| E2E-02 | Phase 3 | Complete |
+| E2E-03 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 32 total

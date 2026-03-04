@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 fully verified, ready for Phase 3
-last_updated: "2026-03-04T19:45:00Z"
-last_activity: 2026-03-04 — Phase 2 verified (5/5), planning artifacts updated
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-04T21:02:45.692Z"
+last_activity: 2026-03-04 — Completed 03-01 (K8s manifests + Makefile + /health endpoint)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_plans: 10
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 ## Current Position
 
-Phase: 3 of 4 (Deploy + Integration) — not yet planned
-Plan: 0 of TBD in current phase
-Status: Ready to plan Phase 3
-Last activity: 2026-03-04 — Phase 2 verification report updated to 5/5 (all gaps closed)
+Phase: 3 of 4 (Deploy + Integration)
+Plan: 1 of 3 in current phase
+Status: Executing Phase 3
+Last activity: 2026-03-04 — Completed 03-01 (K8s manifests + Makefile + /health endpoint)
 
-Progress: [██████████] 100% (7/7 plans across P1+P2)
+Progress: [████████░░] 80% (8/10 plans)
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████████] 100% (7/7 plans across P1+P2)
 | Phase 02 P03 | 3min | 2 tasks | 1 files |
 | Phase 02 P04 | 1min | 1 tasks | 1 files |
 | Phase 02 P05 | 2min | 2 tasks | 0 files |
+| Phase 03 P01 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 02-parallel]: test-oauth.sh → test_oauth.py — bash couldn't handle SSE responses from Streamable HTTP
 - [Phase 02-parallel]: Named tunnel "TheMac" with permanent hostname themac-sketchpad.kempenich.dev
 - [Phase 02-parallel]: GitHub doesn't issue refresh tokens — AUTH-05/AUTH-06 are provider-specific, not failures
+- [Phase 03-01]: Deployment named 'sketchpad' (distinct from 'sketchpad-placeholder') allowing brief coexistence during transition
+- [Phase 03-01]: Health endpoint uses @mcp.custom_route to bypass FastMCP auth (avoids 401 probe failures)
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-04T19:45:00Z
-Stopped at: Phase 2 fully verified, ready for Phase 3
+Last session: 2026-03-04T21:02:45.689Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
