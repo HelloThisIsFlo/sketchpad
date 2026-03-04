@@ -64,7 +64,11 @@ Plans:
   3. Claude AI (via CLI) can call `write_file` with new text and a subsequent `read_file` call in the same conversation returns the updated content
   4. After restarting the pod (`kubectl rollout restart deployment/sketchpad`), a new Claude conversation can read the content written in a previous conversation
   5. `docs/` folder exists with index and all guides; `docs/claude-ai-setup.md` covers adding the integration on phone
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 03-01-PLAN.md — K8s Deployment + Service manifests, Makefile, and /health endpoint
+- [ ] 03-02-PLAN.md — Documentation consolidation (rename, new guides, README index)
+- [ ] 03-03-PLAN.md — Deploy to cluster, test skill, and human E2E verification
 
 ### Phase 4: Hardening
 **Goal**: The running server rejects malformed or potentially malicious requests — Origin validation is active and all MCP tool calls require a valid token
@@ -85,5 +89,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 2. MCP Server + OAuth | 5/5 | Complete | 2026-03-04 |
-| 3. Deploy + Integration | 0/TBD | Not started | - |
+| 3. Deploy + Integration | 0/3 | Planned | - |
 | 4. Hardening | 0/TBD | Not started | - |
