@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-04T02:22:31Z"
-last_activity: 2026-03-04 — Completed Plan 02-01 (FastMCP server with OAuth and file tools)
+status: executing
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-04T02:30:04.290Z"
+last_activity: 2026-03-04 — Completed Plan 02-02 (Dockerfile, test-oauth.sh, MCP Inspector guide)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -26,31 +26,32 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 ## Current Position
 
 Phase: 2 of 4 (MCP Server + OAuth)
-Plan: 1 of 3 in current phase (complete)
+Plan: 2 of 3 in current phase (complete)
 Status: In Progress
-Last activity: 2026-03-04 — Completed Plan 02-01 (FastMCP server with OAuth and file tools)
+Last activity: 2026-03-04 — Completed Plan 02-02 (Dockerfile, test-oauth.sh, MCP Inspector guide)
 
-Progress: [██████░░░░] 60% (3/5 plans)
+Progress: [████████░░] 80% (4/5 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 4.7min
-- Total execution time: 14min
+- Total plans completed: 4
+- Average duration: 4.3min
+- Total execution time: 17min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Infrastructure | 2/2 | 11min | 5.5min |
-| 2. MCP Server + OAuth | 1/3 | 3min | 3min |
+| 2. MCP Server + OAuth | 2/3 | 6min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (4min), 01-02 (7min), 02-01 (3min)
+- Last 5 plans: 01-01 (4min), 01-02 (7min), 02-01 (3min), 02-02 (3min)
 - Trend: Accelerating
 
 *Updated after each plan completion*
+| Phase 02 P02 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: Lazy get_config() with @lru_cache -- imports succeed without .env, env vars read at startup
 - [Phase 02-01]: hatchling build-backend for src layout package discovery
 - [Phase 02-01]: FastMCP resolved to 3.1.0 (latest) -- includes all DCR and RFC 9728 bug fixes
+- [Phase 02]: CMD uses python -m sketchpad in Docker (not uvicorn) -- consistent entry point with local dev
+- [Phase 02]: test-oauth.sh includes MCP initialize + Mcp-Session-Id for Streamable HTTP session handling
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-04T02:22:31Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-04T02:30:04.288Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

@@ -49,7 +49,7 @@ Plans:
 **Plans:** 3 plans
 Plans:
 - [x] 02-01-PLAN.md — Create FastMCP server with GitHubProvider OAuth and file tools
-- [ ] 02-02-PLAN.md — Dockerfile, test-oauth.sh script, and MCP Inspector guide
+- [x] 02-02-PLAN.md — Dockerfile, test-oauth.sh script, and MCP Inspector guide
 - [ ] 02-03-PLAN.md — End-to-end verification via cloudflared tunnel
 
 ### Phase 3: Deploy + Integration
@@ -82,6 +82,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
-| 2. MCP Server + OAuth | 0/3 | Not started | - |
+| 2. MCP Server + OAuth | 2/3 | In Progress | - |
 | 3. Deploy + Integration | 0/TBD | Not started | - |
 | 4. Hardening | 0/TBD | Not started | - |
