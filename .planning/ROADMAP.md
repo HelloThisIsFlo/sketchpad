@@ -13,7 +13,7 @@ Sketchpad proves the full Claude AI integration chain works before building anyt
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infrastructure** - Kubernetes namespace, Secrets, StorageClass, PVC, and Cloudflare Tunnel yielding a reachable HTTPS endpoint
-- [ ] **Phase 2: MCP Server + OAuth** - FastMCP server with GitHubProvider, OAuth endpoints, file tools — built and validated locally
+- [x] **Phase 2: MCP Server + OAuth** - FastMCP server with GitHubProvider, OAuth endpoints, file tools — built and validated locally
 - [ ] **Phase 3: Deploy + Integration** - Server deployed to cluster and full OAuth handshake confirmed from Claude AI
 - [ ] **Phase 4: Hardening** - Origin validation and security controls applied to the running server
 
@@ -50,7 +50,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Create FastMCP server with GitHubProvider OAuth and file tools
 - [x] 02-02-PLAN.md — Dockerfile, test-oauth.sh script, and MCP Inspector guide
-- [ ] 02-03-PLAN.md — End-to-end verification via cloudflared tunnel
+- [x] 02-03-PLAN.md — End-to-end verification via cloudflared tunnel
 
 ### Phase 3: Deploy + Integration
 **Goal**: The MCP server runs on Kubernetes, is reachable via Cloudflare Tunnel over HTTPS, and Claude AI (via Claude Code CLI) completes the full OAuth handshake and can call both file tools
@@ -82,6 +82,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
-| 2. MCP Server + OAuth | 2/3 | In Progress | - |
+| 2. MCP Server + OAuth | 3/3 | Complete | 2026-03-04 |
 | 3. Deploy + Integration | 0/TBD | Not started | - |
 | 4. Hardening | 0/TBD | Not started | - |
