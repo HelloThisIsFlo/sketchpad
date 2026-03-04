@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from fastmcp.server.auth.providers.github import GitHubProvider
 from fastmcp.server.auth.providers.google import GoogleProvider
 from key_value.aio.stores.filetree import (
@@ -75,6 +77,15 @@ def create_app() -> FastMCP:
     auth = create_oauth_provider(cfg, encrypted_store)
 
     mcp = FastMCP(name="Sketchpad", auth=auth)
+
+    # Health endpoint for K8s liveness/readiness probes.
+    # FastMCP's /mcp endpoint returns 401 without auth, which K8s
+    # would interpret as unhealthy. This custom route is unauthenticated
+    # and returns a simple JSON response.
+    @mcp.custom_route("/health", methods=["GET"])
+    async def health(request: Request) -> JSONResponse:
+        return JSONResponse({"status": "ok", "service": "sketchpad"})
+
     register_tools(mcp)
 
     return mcp
