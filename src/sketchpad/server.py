@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.github import GitHubProvider
+from fastmcp.server.auth.providers.google import GoogleProvider
 from key_value.aio.stores.filetree import (
     FileTreeStore,
     FileTreeV1KeySanitizationStrategy,
@@ -31,9 +32,18 @@ def create_oauth_provider(cfg, client_storage):
             client_storage=client_storage,
         )
 
+    if provider == "google":
+        return GoogleProvider(
+            client_id=cfg["GOOGLE_CLIENT_ID"],
+            client_secret=cfg["GOOGLE_CLIENT_SECRET"],
+            base_url=cfg["SERVER_URL"],
+            jwt_signing_key=cfg["JWT_SIGNING_KEY"],
+            client_storage=client_storage,
+        )
+
     raise ValueError(
         f"Unknown OAUTH_PROVIDER: '{provider}'. "
-        f"Supported providers: github. "
+        f"Supported providers: github, google. "
         f"Set OAUTH_PROVIDER in your .env file."
     )
 

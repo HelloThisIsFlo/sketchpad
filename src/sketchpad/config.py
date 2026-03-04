@@ -24,5 +24,8 @@ def get_config():
     if provider == "github":
         cfg["GITHUB_CLIENT_ID"] = os.environ["GITHUB_CLIENT_ID"]
         cfg["GITHUB_CLIENT_SECRET"] = os.environ["GITHUB_CLIENT_SECRET"]
+    elif provider == "google":
+        cfg["GOOGLE_CLIENT_ID"] = os.environ["GOOGLE_CLIENT_ID"]
+        cfg["GOOGLE_CLIENT_SECRET"] = os.environ["GOOGLE_CLIENT_SECRET"]
 
     return cfg
