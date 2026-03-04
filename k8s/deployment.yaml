@@ -1,0 +1,101 @@
+# Sketchpad MCP Server Deployment
+# ================================
+# Deploys the FastMCP server with OAuth authentication, file tools,
+# and persistent storage backed by NFS PVCs on Synology NAS.
+#
+# Environment variables:
+#   - Inline: SERVER_URL, DATA_DIR, STATE_DIR, OAUTH_PROVIDER
+#   - From Secrets: GitHub OAuth credentials, encryption keys
+#
+# Health probes use the /health custom route (not /mcp, which
+# returns 401 without auth and would cause K8s to restart the pod).
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sketchpad
+  namespace: sketchpad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sketchpad
+  template:
+    metadata:
+      labels:
+        # IMPORTANT: Must match the Service selector so cloudflared
+        # traffic (via sketchpad.sketchpad.svc.cluster.local:80)
+        # reaches this pod.
+        app: sketchpad
+    spec:
+      containers:
+        - name: sketchpad
+          image: ghcr.io/hellothisisflo/sketchpad:latest
+          ports:
+            - containerPort: 8000
+          env:
+            # --- Inline values ---
+            - name: SERVER_URL
+              value: "https://thehome-sketchpad.kempenich.dev"
+            - name: DATA_DIR
+              value: "/data"
+            - name: STATE_DIR
+              value: "/state"
+            - name: OAUTH_PROVIDER
+              value: "github"
+            # --- From Secrets ---
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: github-oauth
+                  key: client-id
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: github-oauth
+                  key: client-secret
+            - name: JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: encryption-key
+                  key: jwt-signing-key
+            - name: STORAGE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: encryption-key
+                  key: storage-encryption-key
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: state
+              mountPath: /state
+          # Liveness probe: restart the pod if /health stops responding.
+          # initialDelaySeconds gives the server time to start up.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          # Readiness probe: remove from Service endpoints if unhealthy.
+          # Faster checks than liveness since traffic routing depends on it.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sketchpad-data
+        - name: state
+          persistentVolumeClaim:
+            claimName: sketchpad-state

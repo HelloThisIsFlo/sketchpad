@@ -1,0 +1,28 @@
+# Sketchpad Service
+# =================
+# ClusterIP Service routing traffic to the MCP server pod.
+#
+# Port mapping rationale:
+#   - port: 80       -- The port cloudflared connects to (external-facing)
+#   - targetPort: 8000 -- The port FastMCP listens on inside the pod
+#
+# Cloudflare Tunnel config routes to:
+#   http://sketchpad.sketchpad.svc.cluster.local:80
+#
+# By keeping port 80 externally, the Cloudflare Tunnel configuration
+# does NOT need any changes when switching from the nginx placeholder
+# to the real MCP server. The Service transparently forwards port 80
+# traffic to port 8000 on the pod.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sketchpad
+  namespace: sketchpad
+spec:
+  type: ClusterIP
+  selector:
+    app: sketchpad
+  ports:
+    - port: 80
+      targetPort: 8000
