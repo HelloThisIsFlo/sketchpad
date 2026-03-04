@@ -14,8 +14,32 @@ from sketchpad.config import get_config
 from sketchpad.tools import register_tools
 
 
+def create_oauth_provider(cfg, client_storage):
+    """Build the OAuth provider based on OAUTH_PROVIDER config.
+
+    Currently only 'github' is implemented. Raises ValueError for
+    unknown providers so the server fails fast at startup.
+    """
+    provider = cfg["OAUTH_PROVIDER"]
+
+    if provider == "github":
+        return GitHubProvider(
+            client_id=cfg["GITHUB_CLIENT_ID"],
+            client_secret=cfg["GITHUB_CLIENT_SECRET"],
+            base_url=cfg["SERVER_URL"],
+            jwt_signing_key=cfg["JWT_SIGNING_KEY"],
+            client_storage=client_storage,
+        )
+
+    raise ValueError(
+        f"Unknown OAUTH_PROVIDER: '{provider}'. "
+        f"Supported providers: github. "
+        f"Set OAUTH_PROVIDER in your .env file."
+    )
+
+
 def create_app() -> FastMCP:
-    """Create and configure the FastMCP server with GitHub OAuth and file tools.
+    """Create and configure the FastMCP server with OAuth and file tools.
 
     Reads environment variables via get_config() -- will raise KeyError
     if required vars are missing. This is intentional: fail fast at startup.
@@ -38,16 +62,7 @@ def create_app() -> FastMCP:
         fernet=Fernet(cfg["STORAGE_ENCRYPTION_KEY"]),
     )
 
-    # GitHub OAuth provider -- handles all OAuth 2.1 endpoints automatically:
-    # /.well-known/oauth-authorization-server, /.well-known/oauth-protected-resource,
-    # /register, /authorize, /token, /auth/callback
-    auth = GitHubProvider(
-        client_id=cfg["GITHUB_CLIENT_ID"],
-        client_secret=cfg["GITHUB_CLIENT_SECRET"],
-        base_url=cfg["SERVER_URL"],
-        jwt_signing_key=cfg["JWT_SIGNING_KEY"],
-        client_storage=encrypted_store,
-    )
+    auth = create_oauth_provider(cfg, encrypted_store)
 
     mcp = FastMCP(name="Sketchpad", auth=auth)
     register_tools(mcp)

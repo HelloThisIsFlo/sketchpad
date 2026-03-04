@@ -26,6 +26,7 @@ TMPDIR_BASE="/tmp/sketchpad-oauth-test"
 # -- State --------------------------------------------------------------------
 PASS_COUNT=0
 FAIL_COUNT=0
+SKIP_COUNT=0
 PIDS=()
 
 # -- Helpers ------------------------------------------------------------------
@@ -37,6 +38,11 @@ pass() {
 fail() {
     echo "  FAIL: $1"
     FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+skip() {
+    echo "  SKIP: $1"
+    SKIP_COUNT=$((SKIP_COUNT + 1))
 }
 
 check() {
@@ -97,9 +103,22 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Check for required keys
+# -- Read OAUTH_PROVIDER from .env (default: github) --------------------------
+OAUTH_PROVIDER=$(grep '^OAUTH_PROVIDER=' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d "'" | tr -d '"')
+OAUTH_PROVIDER="${OAUTH_PROVIDER:-github}"
+OAUTH_PROVIDER=$(echo "$OAUTH_PROVIDER" | tr '[:upper:]' '[:lower:]')
+echo "  OAUTH_PROVIDER: $OAUTH_PROVIDER"
+
+# Providers known to NOT issue refresh tokens
+NO_REFRESH_PROVIDERS="github"
+
+# Check for required keys (common + provider-specific)
+REQUIRED_KEYS="JWT_SIGNING_KEY STORAGE_ENCRYPTION_KEY"
+if [ "$OAUTH_PROVIDER" = "github" ]; then
+    REQUIRED_KEYS="$REQUIRED_KEYS GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET"
+fi
 MISSING_KEYS=()
-for key in GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET JWT_SIGNING_KEY STORAGE_ENCRYPTION_KEY; do
+for key in $REQUIRED_KEYS; do
     if [ -z "${!key:-}" ] && ! grep -q "^${key}=" "$ENV_FILE"; then
         MISSING_KEYS+=("$key")
     fi
@@ -417,23 +436,33 @@ REFRESH_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.refresh_token // empty')
 EXPIRES_IN=$(echo "$TOKEN_RESPONSE" | jq -r '.expires_in // empty')
 
 check_not_empty "access_token received" "$ACCESS_TOKEN"
-check_not_empty "refresh_token received" "$REFRESH_TOKEN"
+if [ -n "$REFRESH_TOKEN" ] && [ "$REFRESH_TOKEN" != "null" ]; then
+    pass "refresh_token received"
+elif echo "$NO_REFRESH_PROVIDERS" | grep -qw "$OAUTH_PROVIDER"; then
+    skip "no refresh_token ($OAUTH_PROVIDER doesn't issue them)"
+else
+    fail "refresh_token missing ($OAUTH_PROVIDER should issue one)"
+fi
 check_not_empty "expires_in present" "$EXPIRES_IN"
 
 # ============================================================================
 echo ""
 echo "=== Step 6: Refresh Token ==="
 
-REFRESH_RESPONSE=$(curl -sf -X POST "$SERVER/token" \
-    -H "Content-Type: application/x-www-form-urlencoded" \
-    -d "grant_type=refresh_token&refresh_token=${REFRESH_TOKEN}&client_id=${CLIENT_ID}")
-echo "$REFRESH_RESPONSE" | jq .
+if [ -n "$REFRESH_TOKEN" ] && [ "$REFRESH_TOKEN" != "null" ]; then
+    REFRESH_RESPONSE=$(curl -sf -X POST "$SERVER/token" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=refresh_token&refresh_token=${REFRESH_TOKEN}&client_id=${CLIENT_ID}")
+    echo "$REFRESH_RESPONSE" | jq .
 
-NEW_ACCESS_TOKEN=$(echo "$REFRESH_RESPONSE" | jq -r '.access_token // empty')
-check_not_empty "new access_token from refresh" "$NEW_ACCESS_TOKEN"
+    NEW_ACCESS_TOKEN=$(echo "$REFRESH_RESPONSE" | jq -r '.access_token // empty')
+    check_not_empty "new access_token from refresh" "$NEW_ACCESS_TOKEN"
 
-# Use the refreshed token for subsequent requests
-ACCESS_TOKEN="$NEW_ACCESS_TOKEN"
+    # Use the refreshed token for subsequent requests
+    ACCESS_TOKEN="$NEW_ACCESS_TOKEN"
+else
+    skip "token refresh (no refresh_token available from $OAUTH_PROVIDER)"
+fi
 
 # ============================================================================
 echo ""
@@ -550,7 +579,7 @@ check "read_file returns written content" "$READ_BACK_CONTENT" "Hello from test-
 # ============================================================================
 echo ""
 echo "=== Results ==="
-echo "$PASS_COUNT passed, $FAIL_COUNT failed"
+echo "$PASS_COUNT passed, $FAIL_COUNT failed, $SKIP_COUNT skipped"
 echo ""
 
 if [ "$FAIL_COUNT" -gt 0 ]; then
