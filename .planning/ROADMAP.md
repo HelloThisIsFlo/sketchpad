@@ -46,11 +46,13 @@ Plans:
   3. `curl -X POST http://localhost:8000/mcp` without a token returns HTTP 401 with a `WWW-Authenticate: Bearer resource_metadata=` header
   4. `curl -X POST http://localhost:8000/register` with a valid client metadata body returns a `client_id`
   5. MCP Inspector (or curl) can call `tools/list` with a valid token and receive `read_file` and `write_file` definitions; calling each tool returns the expected file content or confirms a write
-**Plans:** 3 plans
+**Plans:** 5 plans
 Plans:
 - [x] 02-01-PLAN.md — Create FastMCP server with GitHubProvider OAuth and file tools
 - [x] 02-02-PLAN.md — Dockerfile, test-oauth.sh script, and MCP Inspector guide
 - [x] 02-03-PLAN.md — End-to-end verification via cloudflared tunnel
+- [x] 02-04-PLAN.md — Fix DISC-02 URL per RFC 9728 (gap closure)
+- [x] 02-05-PLAN.md — End-to-end OAuth verification (gap closure)
 
 ### Phase 3: Deploy + Integration
 **Goal**: The MCP server runs on Kubernetes, is reachable via Cloudflare Tunnel over HTTPS, and Claude AI (via Claude Code CLI) completes the full OAuth handshake and can call both file tools
@@ -82,6 +84,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
-| 2. MCP Server + OAuth | 3/3 | Complete | 2026-03-04 |
+| 2. MCP Server + OAuth | 5/5 | Complete | 2026-03-04 |
 | 3. Deploy + Integration | 0/TBD | Not started | - |
 | 4. Hardening | 0/TBD | Not started | - |
