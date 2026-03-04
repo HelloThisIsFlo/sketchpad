@@ -34,7 +34,8 @@ This guide configures a Synology NAS (DSM 7.2) as an NFS backend for Kubernetes 
 The path will be `/volume1/k8s`.
 
 4. On the next screen (Advanced Settings):
-   - **Do NOT** enable data checksum (unnecessary overhead for Kubernetes workloads)
+   - ~~**Do NOT** enable data checksum (unnecessary overhead for Kubernetes workloads)~~
+     - **Enable** data checksum: minor overhead, but prevents silent corruption from propagating into backups undetected
    - Leave encryption disabled
 5. Complete the wizard
 
