@@ -9,32 +9,32 @@ Requirements for the spike. Each maps to roadmap phases.
 
 ### Discovery
 
-- [ ] **DISC-01**: Server exposes `/.well-known/oauth-authorization-server` (RFC 8414) returning authorization, token, and registration endpoint URLs
-- [ ] **DISC-02**: Server exposes `/.well-known/oauth-protected-resource` (RFC 9728) returning resource identifier and authorization server reference
-- [ ] **DISC-03**: Claude AI can discover the server's auth requirements by hitting the MCP endpoint and receiving a 401 with correct `WWW-Authenticate: Bearer resource_metadata="..."` header
+- [x] **DISC-01**: Server exposes `/.well-known/oauth-authorization-server` (RFC 8414) returning authorization, token, and registration endpoint URLs
+- [x] **DISC-02**: Server exposes `/.well-known/oauth-protected-resource` (RFC 9728) returning resource identifier and authorization server reference
+- [x] **DISC-03**: Claude AI can discover the server's auth requirements by hitting the MCP endpoint and receiving a 401 with correct `WWW-Authenticate: Bearer resource_metadata="..."` header
 
 ### Authentication
 
-- [ ] **AUTH-01**: Server accepts Dynamic Client Registration (RFC 7591) at `/register` — Claude can self-register and receive a `client_id`
-- [ ] **AUTH-02**: Server redirects to GitHub OAuth at `/authorize` with stored `code_challenge` and `state`
-- [ ] **AUTH-03**: Server handles GitHub OAuth callback, exchanges GitHub code for GitHub access token, generates own authorization code, and redirects to Claude's callback URL
-- [ ] **AUTH-04**: Server exchanges authorization code for access token at `/token` with PKCE verification (`SHA256(code_verifier) == code_challenge`)
-- [ ] **AUTH-05**: Server issues refresh tokens alongside access tokens
-- [ ] **AUTH-06**: Server accepts `grant_type=refresh_token` at `/token` and issues new access/refresh token pair
-- [ ] **AUTH-07**: Access tokens expire after a configured duration (e.g. 1 hour)
+- [x] **AUTH-01**: Server accepts Dynamic Client Registration (RFC 7591) at `/register` — Claude can self-register and receive a `client_id`
+- [x] **AUTH-02**: Server redirects to GitHub OAuth at `/authorize` with stored `code_challenge` and `state`
+- [x] **AUTH-03**: Server handles GitHub OAuth callback, exchanges GitHub code for GitHub access token, generates own authorization code, and redirects to Claude's callback URL
+- [x] **AUTH-04**: Server exchanges authorization code for access token at `/token` with PKCE verification (`SHA256(code_verifier) == code_challenge`)
+- [x] **AUTH-05**: Server issues refresh tokens alongside access tokens
+- [x] **AUTH-06**: Server accepts `grant_type=refresh_token` at `/token` and issues new access/refresh token pair
+- [x] **AUTH-07**: Access tokens expire after a configured duration (e.g. 1 hour)
 
 ### MCP Protocol
 
-- [ ] **MCP-01**: Server accepts MCP requests via Streamable HTTP transport (POST on `/mcp`)
-- [ ] **MCP-02**: Server handles `initialize` request and responds with capabilities including `tools`
-- [ ] **MCP-03**: Server handles `tools/list` request and returns tool definitions for `read_file` and `write_file`
-- [ ] **MCP-04**: Server handles `tools/call` request and dispatches to the correct tool handler
-- [ ] **MCP-05**: Server validates Bearer token on every MCP request and returns 401 for missing/invalid tokens
+- [x] **MCP-01**: Server accepts MCP requests via Streamable HTTP transport (POST on `/mcp`)
+- [x] **MCP-02**: Server handles `initialize` request and responds with capabilities including `tools`
+- [x] **MCP-03**: Server handles `tools/list` request and returns tool definitions for `read_file` and `write_file`
+- [x] **MCP-04**: Server handles `tools/call` request and dispatches to the correct tool handler
+- [x] **MCP-05**: Server validates Bearer token on every MCP request and returns 401 for missing/invalid tokens
 
 ### File Tools
 
-- [ ] **TOOL-01**: `read_file` tool returns the current contents of the sketchpad file
-- [ ] **TOOL-02**: `write_file` tool replaces the contents of the sketchpad file with provided text
+- [x] **TOOL-01**: `read_file` tool returns the current contents of the sketchpad file
+- [x] **TOOL-02**: `write_file` tool replaces the contents of the sketchpad file with provided text
 
 ### Infrastructure
 
@@ -93,23 +93,23 @@ Deferred to the Obsidian vault server project.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISC-01 | Phase 2 | Pending |
-| DISC-02 | Phase 2 | Pending |
-| DISC-03 | Phase 2 | Pending |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
-| AUTH-05 | Phase 2 | Pending |
-| AUTH-06 | Phase 2 | Pending |
-| AUTH-07 | Phase 2 | Pending |
-| MCP-01 | Phase 2 | Pending |
-| MCP-02 | Phase 2 | Pending |
-| MCP-03 | Phase 2 | Pending |
-| MCP-04 | Phase 2 | Pending |
-| MCP-05 | Phase 2 | Pending |
-| TOOL-01 | Phase 2 | Pending |
-| TOOL-02 | Phase 2 | Pending |
+| DISC-01 | Phase 2 | Complete |
+| DISC-02 | Phase 2 | Complete |
+| DISC-03 | Phase 2 | Complete |
+| AUTH-01 | Phase 2 | Complete |
+| AUTH-02 | Phase 2 | Complete |
+| AUTH-03 | Phase 2 | Complete |
+| AUTH-04 | Phase 2 | Complete |
+| AUTH-05 | Phase 2 | Complete |
+| AUTH-06 | Phase 2 | Complete |
+| AUTH-07 | Phase 2 | Complete |
+| MCP-01 | Phase 2 | Complete |
+| MCP-02 | Phase 2 | Complete |
+| MCP-03 | Phase 2 | Complete |
+| MCP-04 | Phase 2 | Complete |
+| MCP-05 | Phase 2 | Complete |
+| TOOL-01 | Phase 2 | Complete |
+| TOOL-02 | Phase 2 | Complete |
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |

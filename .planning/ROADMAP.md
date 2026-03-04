@@ -48,7 +48,7 @@ Plans:
   5. MCP Inspector (or curl) can call `tools/list` with a valid token and receive `read_file` and `write_file` definitions; calling each tool returns the expected file content or confirms a write
 **Plans:** 3 plans
 Plans:
-- [ ] 02-01-PLAN.md — Create FastMCP server with GitHubProvider OAuth and file tools
+- [x] 02-01-PLAN.md — Create FastMCP server with GitHubProvider OAuth and file tools
 - [ ] 02-02-PLAN.md — Dockerfile, test-oauth.sh script, and MCP Inspector guide
 - [ ] 02-03-PLAN.md — End-to-end verification via cloudflared tunnel
 
