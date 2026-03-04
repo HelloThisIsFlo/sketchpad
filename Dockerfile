@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy full source and install the project itself.
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --compile-bytecode
+    uv sync --locked --no-editable --compile-bytecode
 
 # --- Runtime stage: slim image with only the venv ---
 FROM python:3.12-slim
