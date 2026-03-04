@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-03-04T02:36:42.836Z"
-last_activity: 2026-03-04 — Completed Plan 02-03 (E2E verification via cloudflared tunnel)
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-03-04T12:06:31.147Z"
+last_activity: 2026-03-04 — Completed Plan 02-04 (Fix DISC-02 URL per RFC 9728)
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -25,34 +25,35 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 
 ## Current Position
 
-Phase: 2 of 4 (MCP Server + OAuth) -- COMPLETE
-Plan: 3 of 3 in current phase (complete)
-Status: Phase 2 Complete
-Last activity: 2026-03-04 — Completed Plan 02-03 (E2E verification via cloudflared tunnel)
+Phase: 2 of 4 (MCP Server + OAuth)
+Plan: 4 of 5 in current phase (complete)
+Status: Executing
+Last activity: 2026-03-04 — Completed Plan 02-04 (Fix DISC-02 URL per RFC 9728)
 
-Progress: [██████████] 100% (5/5 plans)
+Progress: [█████████░] 86% (6/7 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 4min
-- Total execution time: 20min
+- Total plans completed: 6
+- Average duration: 3.5min
+- Total execution time: 21min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Infrastructure | 2/2 | 11min | 5.5min |
-| 2. MCP Server + OAuth | 3/3 | 9min | 3min |
+| 2. MCP Server + OAuth | 4/5 | 10min | 2.5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (4min), 01-02 (7min), 02-01 (3min), 02-02 (3min), 02-03 (3min)
+- Last 5 plans: 01-02 (7min), 02-01 (3min), 02-02 (3min), 02-03 (3min), 02-04 (1min)
 - Trend: Accelerating
 
 *Updated after each plan completion*
 | Phase 02 P02 | 3min | 2 tasks | 3 files |
 | Phase 02 P03 | 3min | 2 tasks | 1 files |
+| Phase 02 P04 | 1min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 02]: CMD uses python -m sketchpad in Docker (not uvicorn) -- consistent entry point with local dev
 - [Phase 02]: test-oauth.sh includes MCP initialize + Mcp-Session-Id for Streamable HTTP session handling
 - [Phase 02]: Load .env via python-dotenv in __main__.py before create_app() -- keeps config.py pure os.environ reads
+- [Phase 02]: DISC-02 URL is path-aware per RFC 9728: /.well-known/oauth-protected-resource/mcp (resource_path=/mcp)
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-04T02:36:42.834Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-03-04T12:06:31.145Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None
