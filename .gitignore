@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Data directories (created at runtime)
+data/
+state/
+
+# IDE
+.idea/
+.vscode/
+*.swp
