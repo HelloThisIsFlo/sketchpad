@@ -175,7 +175,7 @@ The server starts on `http://localhost:8000` and reads all config from `.env`.
 ### Running the E2E Test
 
 ```bash
-./test-oauth.sh
+uv run python test_oauth.py
 ```
 
 The script guides you through setup — it will prompt you to confirm the server and tunnel are running, verify connectivity to both, then run the full OAuth flow. The only manual step during the test is completing GitHub login in the browser.
