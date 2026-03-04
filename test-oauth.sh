@@ -64,9 +64,10 @@ check_not_empty "token_endpoint present" "$TOKEN_ENDPOINT"
 check_not_empty "registration_endpoint present" "$REG_ENDPOINT"
 
 echo ""
-echo "Fetching /.well-known/oauth-protected-resource ..."
-if ! PR_META=$(curl -sf "$SERVER/.well-known/oauth-protected-resource"); then
-    echo "  FAIL: /.well-known/oauth-protected-resource returned non-200 (endpoint missing?)"
+echo "Fetching /.well-known/oauth-protected-resource/mcp (RFC 9728 path-aware) ..."
+if ! PR_META=$(curl -sf "$SERVER/.well-known/oauth-protected-resource/mcp"); then
+    echo "  FAIL: /.well-known/oauth-protected-resource/mcp returned non-200"
+    echo "        (RFC 9728 Section 3.1: path-aware URL includes the MCP resource path)"
     echo ""
     echo "=== ABORTED: DISC-02 is a required endpoint ==="
     exit 1
