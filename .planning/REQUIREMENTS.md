@@ -52,10 +52,10 @@ Requirements for the spike. Each maps to roadmap phases.
 
 ### Documentation
 
-- [ ] **DOCS-01**: `docs/` folder exists with an index and step-by-step guides for all manual setup steps
+- [x] **DOCS-01**: `docs/` folder exists with an index and step-by-step guides for all manual setup steps
 - [x] **DOCS-02**: Guide for creating the GitHub OAuth App (exact URLs, what to enter, what to copy back)
 - [x] **DOCS-03**: Guide for configuring Cloudflare Tunnel to point at the sketchpad service (config snippet, hostname setup)
-- [ ] **DOCS-04**: Guide for adding the server as a Claude AI Integration on phone (exact steps in the app)
+- [x] **DOCS-04**: Guide for adding the server as a Claude AI Integration on phone (exact steps in the app)
 
 ### End-to-End
 
@@ -118,10 +118,10 @@ Deferred to the Obsidian vault server project.
 | INFRA-06 | Phase 1 | Complete |
 | SEC-01 | Phase 4 | Pending |
 | SEC-02 | Phase 4 | Pending |
-| DOCS-01 | Phase 3 | Pending |
+| DOCS-01 | Phase 3 | Complete |
 | DOCS-02 | Phase 1 | Complete |
 | DOCS-03 | Phase 1 | Complete |
-| DOCS-04 | Phase 3 | Pending |
+| DOCS-04 | Phase 3 | Complete |
 | E2E-01 | Phase 3 | Complete |
 | E2E-02 | Phase 3 | Complete |
 | E2E-03 | Phase 3 | Complete |

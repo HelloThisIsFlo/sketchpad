@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-04T21:02:45.692Z"
-last_activity: 2026-03-04 — Completed 03-01 (K8s manifests + Makefile + /health endpoint)
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-04T21:04:20.906Z"
+last_activity: 2026-03-04 — Completed 03-02 (docs consolidation, callback URL fix, Claude AI setup guide)
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 ## Current Position
 
 Phase: 3 of 4 (Deploy + Integration)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Executing Phase 3
-Last activity: 2026-03-04 — Completed 03-01 (K8s manifests + Makefile + /health endpoint)
+Last activity: 2026-03-04 — Completed 03-02 (docs consolidation, callback URL fix, Claude AI setup guide)
 
-Progress: [████████░░] 80% (8/10 plans)
+Progress: [█████████░] 90% (9/10 plans)
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 80% (8/10 plans)
 | Phase 02 P04 | 1min | 1 tasks | 1 files |
 | Phase 02 P05 | 2min | 2 tasks | 0 files |
 | Phase 03 P01 | 2min | 2 tasks | 4 files |
+| Phase 03 P02 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,7 @@ Recent decisions affecting current work:
 - [Phase 02-parallel]: GitHub doesn't issue refresh tokens — AUTH-05/AUTH-06 are provider-specific, not failures
 - [Phase 03-01]: Deployment named 'sketchpad' (distinct from 'sketchpad-placeholder') allowing brief coexistence during transition
 - [Phase 03-01]: Health endpoint uses @mcp.custom_route to bypass FastMCP auth (avoids 401 probe failures)
+- [Phase 03-02]: Callback URL corrected from /github/callback to /auth/callback in OAuth guide
 
 ### Pending Todos
 
@@ -99,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-04T21:02:45.689Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-04T21:04:20.904Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
