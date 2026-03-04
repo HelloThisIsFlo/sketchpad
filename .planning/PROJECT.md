@@ -74,6 +74,10 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 | GitHub as identity provider | Simplest OAuth provider for personal use | — Pending |
 | PVC for persistence | HostPath too fragile, PVC is K8s-standard | — Pending |
 | Cloudflare Tunnel for ingress | Bypasses CGNAT, already used for other services | — Pending |
+| OAUTH_PROVIDER env var + factory | Makes server extensible for future OAuth providers (only GitHub now) | Implemented in Phase 2 parallel session |
+| test-oauth.sh → test_oauth.py | Bash couldn't handle SSE from Streamable HTTP; Python httpx handles it | Implemented in Phase 2 parallel session |
+| Named tunnel "TheMac" | Permanent hostname avoids re-configuring GitHub callback URL each session | themac-sketchpad.kempenich.dev |
+| GitHub refresh tokens: N/A | GitHub doesn't issue refresh tokens; AUTH-05/AUTH-06 are provider-specific | Documented as SKIP in test, not failure |
 
 ---
-*Last updated: 2026-03-02 after initialization*
+*Last updated: 2026-03-04 after Phase 2 verification*

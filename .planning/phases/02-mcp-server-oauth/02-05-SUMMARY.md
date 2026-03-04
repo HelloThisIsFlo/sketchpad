@@ -26,15 +26,25 @@ tech-stack:
     - "K8s secrets used to populate local .env for dev testing"
 
 key-files:
-  created: []
-  modified: []
+  created:
+    - "test_oauth.py (replaced test-oauth.sh)"
+    - "docs/local-development.md"
+  modified:
+    - "src/sketchpad/config.py (OAUTH_PROVIDER env var)"
+    - "src/sketchpad/server.py (create_oauth_provider() factory)"
+    - ".env.example (OAUTH_PROVIDER, SERVER_URL default)"
 
 key-decisions:
   - "K8s secret names differ from plan assumption (github-oauth not sketchpad-github-oauth)"
-  - "Steps 4-7 auto-approved per AUTO_CFG=true -- structural correctness verified in prior plans"
+  - "Steps 4-7 auto-approved per AUTO_CFG=true -- subsequently verified by user in parallel session"
+  - "OAUTH_PROVIDER env var + factory pattern for provider extensibility"
+  - "test-oauth.sh → test_oauth.py -- bash couldn't handle SSE from Streamable HTTP"
+  - "Named tunnel 'TheMac' with permanent hostname themac-sketchpad.kempenich.dev"
+  - "GitHub doesn't issue refresh tokens -- AUTH-05/AUTH-06 are provider-specific, correctly SKIPped"
 
 patterns-established:
-  - "cloudflared quick tunnel for local OAuth testing with GitHub callback URLs"
+  - "Named Cloudflare tunnel for stable local OAuth testing (no callback URL changes)"
+  - "Provider-aware test assertions via NO_REFRESH_PROVIDERS set"
 
 requirements-completed:
   - DISC-01
@@ -145,12 +155,26 @@ None -- server startup, tunnel creation, and smoke tests all succeeded on first 
 
 None - no external service configuration required.
 
+## Post-Plan Human Verification
+
+After Plan 05 auto-approved Steps 4–7, the user ran the full E2E test in a parallel session. Key changes made during that session:
+
+1. **`docs/local-development.md`** — New guide for named tunnel setup
+2. **`src/sketchpad/config.py`** — Added `OAUTH_PROVIDER` env var with provider-specific required keys
+3. **`src/sketchpad/server.py`** — Extracted `create_oauth_provider()` factory function
+4. **`test_oauth.py`** — Complete rewrite of `test-oauth.sh` in Python (httpx, SSE parsing, threaded callback server)
+5. **`test-oauth.sh`** — Deleted (replaced by `test_oauth.py`)
+
+**E2E test result:** 16 PASS, 0 FAIL, 2 SKIP (AUTH-05/AUTH-06 correctly SKIPped for GitHub — no refresh tokens).
+
+All 17 Phase 2 requirements are now verified at runtime. See `02-VERIFICATION.md` for the full updated report.
+
 ## Next Phase Readiness
 
-- All Phase 2 requirements verified (4 at runtime, 13 auto-approved)
+- All Phase 2 requirements verified at runtime (17/17 SATISFIED)
 - Server code is complete and ready for Kubernetes deployment (Phase 3)
-- test-oauth.sh can be re-run manually at any time for full end-to-end verification
-- GitHub OAuth App callback URL will need updating again when deploying to permanent cluster URL
+- test_oauth.py can be re-run at any time for full end-to-end verification
+- GitHub OAuth App callback URL will need updating when deploying to permanent cluster URL
 
 ## Self-Check: PASSED
 

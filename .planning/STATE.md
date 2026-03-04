@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-05-PLAN.md (Phase 2 complete)
-last_updated: "2026-03-04T12:09:53Z"
-last_activity: 2026-03-04 — Completed Plan 02-05 (End-to-end OAuth verification)
+stopped_at: Phase 2 fully verified, ready for Phase 3
+last_updated: "2026-03-04T19:45:00Z"
+last_activity: 2026-03-04 — Phase 2 verified (5/5), planning artifacts updated
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
   completed_plans: 7
   percent: 100
@@ -18,19 +18,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-02)
+See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** Phase 2 — MCP Server + OAuth
+**Current focus:** Phase 3 — Deploy + Integration
 
 ## Current Position
 
-Phase: 2 of 4 (MCP Server + OAuth)
-Plan: 5 of 5 in current phase (complete)
-Status: Phase 2 complete
-Last activity: 2026-03-04 — Completed Plan 02-05 (End-to-end OAuth verification)
+Phase: 3 of 4 (Deploy + Integration) — not yet planned
+Plan: 0 of TBD in current phase
+Status: Ready to plan Phase 3
+Last activity: 2026-03-04 — Phase 2 verification report updated to 5/5 (all gaps closed)
 
-Progress: [██████████] 100% (7/7 plans)
+Progress: [██████████] 100% (7/7 plans across P1+P2)
 
 ## Performance Metrics
 
@@ -77,10 +77,12 @@ Recent decisions affecting current work:
 - [Phase 02-01]: hatchling build-backend for src layout package discovery
 - [Phase 02-01]: FastMCP resolved to 3.1.0 (latest) -- includes all DCR and RFC 9728 bug fixes
 - [Phase 02]: CMD uses python -m sketchpad in Docker (not uvicorn) -- consistent entry point with local dev
-- [Phase 02]: test-oauth.sh includes MCP initialize + Mcp-Session-Id for Streamable HTTP session handling
 - [Phase 02]: Load .env via python-dotenv in __main__.py before create_app() -- keeps config.py pure os.environ reads
 - [Phase 02]: DISC-02 URL is path-aware per RFC 9728: /.well-known/oauth-protected-resource/mcp (resource_path=/mcp)
-- [Phase 02]: Steps 1-3 verified at runtime via cloudflared tunnel; Steps 4-7 auto-approved (require human browser OAuth flow)
+- [Phase 02-parallel]: OAUTH_PROVIDER env var + create_oauth_provider() factory — server extensible for future providers
+- [Phase 02-parallel]: test-oauth.sh → test_oauth.py — bash couldn't handle SSE responses from Streamable HTTP
+- [Phase 02-parallel]: Named tunnel "TheMac" with permanent hostname themac-sketchpad.kempenich.dev
+- [Phase 02-parallel]: GitHub doesn't issue refresh tokens — AUTH-05/AUTH-06 are provider-specific, not failures
 
 ### Pending Todos
 
@@ -94,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-04T12:09:53Z
-Stopped at: Completed 02-05-PLAN.md (Phase 2 complete)
+Last session: 2026-03-04T19:45:00Z
+Stopped at: Phase 2 fully verified, ready for Phase 3
 Resume file: None
