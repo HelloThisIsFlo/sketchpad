@@ -6,7 +6,7 @@ NS     := sketchpad
 .PHONY: build push deploy all status
 
 build:
-	docker build -t $(IMAGE):$(TAG) -t $(IMAGE):latest .
+	docker buildx build --platform linux/amd64 -t $(IMAGE):$(TAG) -t $(IMAGE):latest --load .
 
 push:
 	docker push $(IMAGE):$(TAG)
