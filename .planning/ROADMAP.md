@@ -78,7 +78,10 @@ Plans:
   1. A request to the MCP endpoint with an `Origin` header that does not match the server's configured hostname returns an error (not processed)
   2. A request to any MCP tool endpoint with no `Authorization` header returns HTTP 401, not tool output
   3. A legitimate Claude AI request with a valid token and correct Origin continues to work normally after hardening is applied
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Origin validation middleware, K8s deploy, and automated security tests
+- [ ] 04-02-PLAN.md — Human E2E verification (Claude Code test skill + phone test)
 
 ## Progress
 
@@ -90,4 +93,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 2. MCP Server + OAuth | 5/5 | Complete | 2026-03-04 |
 | 3. Deploy + Integration | 0/3 | Planned | - |
-| 4. Hardening | 0/TBD | Not started | - |
+| 4. Hardening | 0/2 | Planned | - |
