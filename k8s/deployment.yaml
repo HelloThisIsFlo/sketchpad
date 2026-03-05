@@ -43,6 +43,8 @@ spec:
               value: "/state"
             - name: OAUTH_PROVIDER
               value: "github"
+            - name: ALLOWED_ORIGINS
+              value: "https://claude.ai,https://www.claude.ai"
             # --- From Secrets ---
             - name: GITHUB_CLIENT_ID
               valueFrom:
