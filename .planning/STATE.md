@@ -96,7 +96,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- **Per-user sketchpad segregation** (auth) — Segregate storage by OAuth username so each user gets their own sketchpad. Target: next milestone.
 
 ### Blockers/Concerns
 
