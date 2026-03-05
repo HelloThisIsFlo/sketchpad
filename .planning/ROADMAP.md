@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Infrastructure** - Kubernetes namespace, Secrets, StorageClass, PVC, and Cloudflare Tunnel yielding a reachable HTTPS endpoint
 - [x] **Phase 2: MCP Server + OAuth** - FastMCP server with GitHubProvider, OAuth endpoints, file tools — built and validated locally
 - [x] **Phase 3: Deploy + Integration** - Server deployed to cluster and full OAuth handshake confirmed from Claude AI
-- [ ] **Phase 4: Hardening** - Origin validation and security controls applied to the running server
+- [x] **Phase 4: Hardening** - Origin validation and security controls applied to the running server
 
 ## Phase Details
 
@@ -81,7 +81,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 04-01-PLAN.md — Origin validation middleware, K8s deploy, and automated security tests
-- [ ] 04-02-PLAN.md — Human E2E verification (Claude Code test skill + phone test)
+- [x] 04-02-PLAN.md — Human E2E verification (Claude Code test skill + phone test)
 
 ## Progress
 
@@ -93,4 +93,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 2. MCP Server + OAuth | 5/5 | Complete | 2026-03-04 |
 | 3. Deploy + Integration | 3/3 | Complete | 2026-03-04 |
-| 4. Hardening | 1/2 | In Progress | - |
+| 4. Hardening | 2/2 | Complete | 2026-03-05 |

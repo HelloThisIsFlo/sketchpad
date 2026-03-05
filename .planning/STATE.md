@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-05T18:55:10.032Z"
-last_activity: 2026-03-05 — Completed 04-01 (Origin validation middleware, security tests)
+stopped_at: Completed 04-02-PLAN.md -- All plans complete, milestone v1.0 done
+last_updated: "2026-03-05T18:59:06.648Z"
+last_activity: 2026-03-05 — Completed 04-02 (Post-hardening verification, auto-approved)
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -25,19 +25,19 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 ## Current Position
 
-Phase: 4 of 4 (Hardening)
-Plan: 1 of 2 in current phase
-Status: Plan 04-01 complete, 04-02 remaining
-Last activity: 2026-03-05 — Completed 04-01 (Origin validation middleware, security tests)
+Phase: 4 of 4 (Hardening) -- COMPLETE
+Plan: 2 of 2 in current phase -- ALL COMPLETE
+Status: All plans complete. Milestone v1.0 done.
+Last activity: 2026-03-05 — Completed 04-02 (Post-hardening verification, auto-approved)
 
-Progress: [█████████░] 92% (11/12 plans)
+Progress: [██████████] 100% (12/12 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 4.5min
-- Total execution time: 40min
+- Total plans completed: 12
+- Average duration: 4.2min
+- Total execution time: 41min
 
 **By Phase:**
 
@@ -46,10 +46,10 @@ Progress: [█████████░] 92% (11/12 plans)
 | 1. Infrastructure | 2/2 | 11min | 5.5min |
 | 2. MCP Server + OAuth | 5/5 | 12min | 2.4min |
 | 3. Deploy + Integration | 3/3 | 18min | 6.0min |
-| 4. Hardening | 1/2 | 3min | 3.0min |
+| 4. Hardening | 2/2 | 4min | 2.0min |
 
 **Recent Trend:**
-- Last 5 plans: 02-04 (1min), 02-05 (2min), 03-01 (2min), 03-02 (2min), 04-01 (3min)
+- Last 5 plans: 02-05 (2min), 03-01 (2min), 03-02 (2min), 04-01 (3min), 04-02 (1min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -61,6 +61,7 @@ Progress: [█████████░] 92% (11/12 plans)
 | Phase 03 P02 | 2min | 2 tasks | 4 files |
 | Phase 03 P03 | 14min | 3 tasks | 2 files |
 | Phase 04 P01 | 3min | 2 tasks | 5 files |
+| Phase 04 P02 | 1min | 1 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Recent decisions affecting current work:
 - [Phase 04-01]: Origin validation only on /mcp path -- discovery, health, OAuth endpoints remain open
 - [Phase 04-01]: No Origin header = pass through (non-browser CLI clients) -- auth layer handles token check
 - [Phase 04-01]: No CORS middleware added (user decision) -- Origin check is allowlist-only
+- [Phase 04-02]: Checkpoint auto-approved in auto-mode -- CLI has no Origin header, passes through transparently
 
 ### Pending Todos
 
@@ -111,6 +113,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-05T18:55:10.029Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-05T18:59:02.841Z
+Stopped at: Completed 04-02-PLAN.md -- All plans complete, milestone v1.0 done
 Resume file: None
