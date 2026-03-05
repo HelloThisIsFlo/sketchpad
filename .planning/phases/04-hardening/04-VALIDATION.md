@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: hardening
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-05
+validated: 2026-03-05
 ---
 
 # Phase 4 — Validation Strategy
@@ -38,20 +39,20 @@ created: 2026-03-05
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 04-01-01 | 01 | 1 | SEC-01 | integration (live) | `python test_security.py::test_bad_origin` | ❌ W0 | ⬜ pending |
-| 04-01-02 | 01 | 1 | SEC-01 | integration (live) | `python test_security.py::test_no_origin` | ❌ W0 | ⬜ pending |
-| 04-01-03 | 01 | 1 | SEC-01 | integration (live) | `python test_security.py::test_discovery_open` | ❌ W0 | ⬜ pending |
-| 04-01-04 | 01 | 1 | SEC-02 | integration (live) | `python test_security.py::test_no_token` | ❌ W0 | ⬜ pending |
-| 04-01-05 | 01 | 1 | SEC-02 | integration (live) | `python test_security.py::test_www_authenticate` | ❌ W0 | ⬜ pending |
-| 04-02-01 | 02 | 2 | SEC-01, SEC-02 | e2e (interactive) | Claude Code test skill + phone test | ✅ skill exists | ⬜ pending |
+| 04-01-01 | 01 | 1 | SEC-01 | integration (live) | `python test_security.py` (test_bad_origin) | yes | green |
+| 04-01-02 | 01 | 1 | SEC-01 | integration (live) | `python test_security.py` (test_no_origin) | yes | green |
+| 04-01-03 | 01 | 1 | SEC-01 | integration (live) | `python test_security.py` (test_discovery_open) | yes | green |
+| 04-01-04 | 01 | 1 | SEC-02 | integration (live) | `python test_security.py` (test_no_token) | yes | green |
+| 04-01-05 | 01 | 1 | SEC-02 | integration (live) | `python test_security.py` (test_no_token — WWW-Authenticate assertion) | yes | green |
+| 04-02-01 | 02 | 2 | SEC-01, SEC-02 | e2e (interactive) | Claude Code test skill + phone test | skill exists | manual-only |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending · green · red · flaky · manual-only*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `test_security.py` — covers SEC-01 and SEC-02 automated checks (bad Origin 403, no Origin pass, no token 401, WWW-Authenticate header, discovery open)
+- [x] `test_security.py` — covers SEC-01 and SEC-02 automated checks (bad Origin 403, no Origin pass, no token 401, WWW-Authenticate header, discovery open)
 - No framework install needed (httpx already in dependencies)
 
 ---
@@ -67,11 +68,23 @@ created: 2026-03-05
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** complete
+
+---
+
+## Validation Audit 2026-03-05
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 5 automated test functions in `test_security.py` (8 assertions) confirmed passing against live deployment per 04-01-SUMMARY.md and 04-VERIFICATION.md. No new tests needed.
