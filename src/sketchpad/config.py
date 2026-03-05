@@ -18,6 +18,13 @@ def get_config():
         "STATE_DIR": os.environ.get("STATE_DIR", "./state"),
         "SKETCHPAD_FILENAME": os.environ.get("SKETCHPAD_FILENAME", "sketchpad.md"),
         "SIZE_LIMIT": int(os.environ.get("SIZE_LIMIT", "50000")),
+        "ALLOWED_ORIGINS": [
+            o.strip()
+            for o in os.environ.get(
+                "ALLOWED_ORIGINS", "https://claude.ai,https://www.claude.ai"
+            ).split(",")
+            if o.strip()
+        ],
     }
 
     # Provider-specific env vars
