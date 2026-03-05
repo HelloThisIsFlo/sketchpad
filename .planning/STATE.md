@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-03-PLAN.md (Phase 3 complete)
-last_updated: "2026-03-05T15:41:08.676Z"
-last_activity: 2026-03-04 — Completed 03-03 (K8s deployment, E2E verification, test skill)
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-05T18:55:10.032Z"
+last_activity: 2026-03-05 — Completed 04-01 (Origin validation middleware, security tests)
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_plans: 12
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** Phase 3 — Deploy + Integration
+**Current focus:** Phase 4 — Hardening
 
 ## Current Position
 
-Phase: 3 of 4 (Deploy + Integration) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase 3 Complete
-Last activity: 2026-03-04 — Completed 03-03 (K8s deployment, E2E verification, test skill)
+Phase: 4 of 4 (Hardening)
+Plan: 1 of 2 in current phase
+Status: Plan 04-01 complete, 04-02 remaining
+Last activity: 2026-03-05 — Completed 04-01 (Origin validation middleware, security tests)
 
-Progress: [██████████] 100% (10/10 plans)
+Progress: [█████████░] 92% (11/12 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 4.9min
-- Total execution time: 37min
+- Total plans completed: 11
+- Average duration: 4.5min
+- Total execution time: 40min
 
 **By Phase:**
 
@@ -46,10 +46,11 @@ Progress: [██████████] 100% (10/10 plans)
 | 1. Infrastructure | 2/2 | 11min | 5.5min |
 | 2. MCP Server + OAuth | 5/5 | 12min | 2.4min |
 | 3. Deploy + Integration | 3/3 | 18min | 6.0min |
+| 4. Hardening | 1/2 | 3min | 3.0min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3min), 02-02 (3min), 02-03 (3min), 02-04 (1min), 02-05 (2min)
-- Trend: Accelerating
+- Last 5 plans: 02-04 (1min), 02-05 (2min), 03-01 (2min), 03-02 (2min), 04-01 (3min)
+- Trend: Consistent
 
 *Updated after each plan completion*
 | Phase 02 P02 | 3min | 2 tasks | 3 files |
@@ -59,6 +60,7 @@ Progress: [██████████] 100% (10/10 plans)
 | Phase 03 P01 | 2min | 2 tasks | 4 files |
 | Phase 03 P02 | 2min | 2 tasks | 4 files |
 | Phase 03 P03 | 14min | 3 tasks | 2 files |
+| Phase 04 P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -93,6 +95,9 @@ Recent decisions affecting current work:
 - [Phase 03-03]: Dockerfile requires --no-editable in uv sync for multi-stage builds (editable .pth references /app/src which doesn't exist in runtime stage)
 - [Phase 03-03]: K8s encryption-key Secret recreated with jwt-signing-key and storage-encryption-key (was only fernet-key)
 - [Phase 03-03]: docker buildx --platform linux/amd64 required for Apple Silicon -> Talos amd64 K8s nodes
+- [Phase 04-01]: Origin validation only on /mcp path -- discovery, health, OAuth endpoints remain open
+- [Phase 04-01]: No Origin header = pass through (non-browser CLI clients) -- auth layer handles token check
+- [Phase 04-01]: No CORS middleware added (user decision) -- Origin check is allowlist-only
 
 ### Pending Todos
 
@@ -106,6 +111,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-04T21:20:11Z
-Stopped at: Completed 03-03-PLAN.md (Phase 3 complete)
+Last session: 2026-03-05T18:55:10.029Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

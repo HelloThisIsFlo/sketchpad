@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infrastructure** - Kubernetes namespace, Secrets, StorageClass, PVC, and Cloudflare Tunnel yielding a reachable HTTPS endpoint
 - [x] **Phase 2: MCP Server + OAuth** - FastMCP server with GitHubProvider, OAuth endpoints, file tools — built and validated locally
-- [ ] **Phase 3: Deploy + Integration** - Server deployed to cluster and full OAuth handshake confirmed from Claude AI
+- [x] **Phase 3: Deploy + Integration** - Server deployed to cluster and full OAuth handshake confirmed from Claude AI
 - [ ] **Phase 4: Hardening** - Origin validation and security controls applied to the running server
 
 ## Phase Details
@@ -66,9 +66,9 @@ Plans:
   5. `docs/` folder exists with index and all guides; `docs/claude-ai-setup.md` covers adding the integration on phone
 **Plans:** 3 plans
 Plans:
-- [ ] 03-01-PLAN.md — K8s Deployment + Service manifests, Makefile, and /health endpoint
-- [ ] 03-02-PLAN.md — Documentation consolidation (rename, new guides, README index)
-- [ ] 03-03-PLAN.md — Deploy to cluster, test skill, and human E2E verification
+- [x] 03-01-PLAN.md — K8s Deployment + Service manifests, Makefile, and /health endpoint
+- [x] 03-02-PLAN.md — Documentation consolidation (rename, new guides, README index)
+- [x] 03-03-PLAN.md — Deploy to cluster, test skill, and human E2E verification
 
 ### Phase 4: Hardening
 **Goal**: The running server rejects malformed or potentially malicious requests — Origin validation is active and all MCP tool calls require a valid token
@@ -80,7 +80,7 @@ Plans:
   3. A legitimate Claude AI request with a valid token and correct Origin continues to work normally after hardening is applied
 **Plans:** 2 plans
 Plans:
-- [ ] 04-01-PLAN.md — Origin validation middleware, K8s deploy, and automated security tests
+- [x] 04-01-PLAN.md — Origin validation middleware, K8s deploy, and automated security tests
 - [ ] 04-02-PLAN.md — Human E2E verification (Claude Code test skill + phone test)
 
 ## Progress
@@ -92,5 +92,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete | 2026-03-04 |
 | 2. MCP Server + OAuth | 5/5 | Complete | 2026-03-04 |
-| 3. Deploy + Integration | 0/3 | Planned | - |
-| 4. Hardening | 0/2 | Planned | - |
+| 3. Deploy + Integration | 3/3 | Complete | 2026-03-04 |
+| 4. Hardening | 1/2 | In Progress | - |

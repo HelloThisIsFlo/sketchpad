@@ -47,8 +47,8 @@ Requirements for the spike. Each maps to roadmap phases.
 
 ### Security
 
-- [ ] **SEC-01**: Server validates Origin header on incoming requests (DNS rebinding protection)
-- [ ] **SEC-02**: Only authenticated requests can access MCP tools (no anonymous tool calls)
+- [x] **SEC-01**: Server validates Origin header on incoming requests (DNS rebinding protection)
+- [x] **SEC-02**: Only authenticated requests can access MCP tools (no anonymous tool calls)
 
 ### Documentation
 
@@ -116,8 +116,8 @@ Deferred to the Obsidian vault server project.
 | INFRA-04 | Phase 1 | Complete |
 | INFRA-05 | Phase 1 | Complete |
 | INFRA-06 | Phase 1 | Complete |
-| SEC-01 | Phase 4 | Pending |
-| SEC-02 | Phase 4 | Pending |
+| SEC-01 | Phase 4 | Complete |
+| SEC-02 | Phase 4 | Complete |
 | DOCS-01 | Phase 3 | Complete |
 | DOCS-02 | Phase 1 | Complete |
 | DOCS-03 | Phase 1 | Complete |
