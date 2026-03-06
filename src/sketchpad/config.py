@@ -17,7 +17,8 @@ def get_config():
         "DATA_DIR": os.environ.get("DATA_DIR", "./data"),
         "STATE_DIR": os.environ.get("STATE_DIR", "./state"),
         "SKETCHPAD_FILENAME": os.environ.get("SKETCHPAD_FILENAME", "sketchpad.md"),
-        "SIZE_LIMIT": int(os.environ.get("SIZE_LIMIT", "50000")),
+        "MAX_STORAGE_USER": int(os.environ.get("MAX_STORAGE_USER", "20000")),
+        "MAX_STORAGE_GLOBAL": int(os.environ.get("MAX_STORAGE_GLOBAL", "52428800")),
         "ALLOWED_ORIGINS": [
             o.strip()
             for o in os.environ.get(

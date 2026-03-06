@@ -1,9 +1,12 @@
+import logging
 from pathlib import Path
 
 from fastmcp.server.dependencies import get_access_token
 
 from sketchpad.config import get_config
 from sketchpad.user_identity import resolve_user_dir
+
+logger = logging.getLogger(__name__)
 
 WELCOME_MESSAGE = "Welcome to Sketchpad! Write something here."
 
@@ -17,6 +20,11 @@ def _get_user_sketchpad_path() -> Path:
     cfg = get_config()
     user_dir = resolve_user_dir(cfg["DATA_DIR"], cfg["OAUTH_PROVIDER"], login)
     return user_dir / cfg["SKETCHPAD_FILENAME"]
+
+
+def _calculate_dir_size(directory: Path) -> int:
+    """Sum of all file sizes in a directory tree."""
+    return sum(f.stat().st_size for f in directory.rglob('*') if f.is_file())
 
 
 def register_tools(mcp):
@@ -33,10 +41,6 @@ def register_tools(mcp):
 
         content = sketchpad_path.read_text(encoding="utf-8")
 
-        cfg = get_config()
-        if len(content) > cfg["SIZE_LIMIT"]:
-            content += "\n\n---\n[WARNING: File exceeds recommended size limit (~50KB). Consider trimming older content.]"
-
         return content
 
     @mcp.tool
@@ -52,6 +56,29 @@ def register_tools(mcp):
         """
         sketchpad_path = _get_user_sketchpad_path()
         sketchpad_path.parent.mkdir(parents=True, exist_ok=True)
+
+        cfg = get_config()
+        content_bytes = len(content.encode("utf-8"))
+
+        # Per-user limit (STOR-01) -- check first, fail fast
+        if mode == "append":
+            existing_size = sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
+            resulting_size = existing_size + content_bytes
+        else:
+            resulting_size = content_bytes
+
+        if resulting_size > cfg["MAX_STORAGE_USER"]:
+            logger.warning("Per-user storage limit exceeded for write")
+            return "Sketchpad too large. Try reducing the size of your sketchpad."
+
+        # Global limit (STOR-02)
+        data_dir = Path(cfg["DATA_DIR"]).resolve()
+        global_size = _calculate_dir_size(data_dir)
+        current_file_size = sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
+        net_addition = resulting_size - current_file_size
+        if global_size + net_addition > cfg["MAX_STORAGE_GLOBAL"]:
+            logger.warning("Global storage limit exceeded for write")
+            return "Server storage full. Try again later or reduce your sketchpad size."
 
         if mode == "append":
             existing = (

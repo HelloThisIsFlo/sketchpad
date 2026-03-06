@@ -120,8 +120,6 @@ def _mock_config(tmp_data_dir):
         "SKETCHPAD_FILENAME": "sketchpad.md",
         "MAX_STORAGE_USER": 20000,
         "MAX_STORAGE_GLOBAL": 52428800,
-        # SIZE_LIMIT kept temporarily until tools.py is updated (Task 2)
-        "SIZE_LIMIT": 50000,
     }
 
 
