@@ -65,10 +65,11 @@ Plans:
   2. `just build`, `just deploy`, and other recipes produce the same results as their `make` equivalents
   3. GitHub Actions CI runs successfully using `setup-just` action instead of `make`
   4. The Makefile is deleted -- no stale build file left behind
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 07-01: TBD
+- [ ] 07-01-PLAN.md — Ruff setup + one-time format + Justfile creation
+- [ ] 07-02-PLAN.md — CI workflow update with test/lint gates + Makefile deletion
 
 ## Progress
 
@@ -83,6 +84,6 @@ Phases execute in numeric order. Phase 7 is independent of 5-6 and could run in 
 | 4. Hardening | v1.0 | 2/2 | Complete | 2026-03-05 |
 | 5. Per-User Storage Isolation | v1.1 | 2/2 | Complete | 2026-03-06 |
 | 6. Storage Limits | v1.1 | 0/1 | Not started | - |
-| 7. Build Tooling Migration | v1.1 | 0/? | Not started | - |
+| 7. Build Tooling Migration | v1.1 | 0/2 | Not started | - |
 
 _Full v1.0 details: `.planning/milestones/v1.0-ROADMAP.md`_
