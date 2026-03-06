@@ -81,7 +81,7 @@ Phases execute in numeric order. Phase 7 is independent of 5-6 and could run in 
 | 2. MCP Server + OAuth | v1.0 | 5/5 | Complete | 2026-03-04 |
 | 3. Deploy + Integration | v1.0 | 3/3 | Complete | 2026-03-05 |
 | 4. Hardening | v1.0 | 2/2 | Complete | 2026-03-05 |
-| 5. Per-User Storage Isolation | v1.1 | 0/2 | Planned | - |
+| 5. Per-User Storage Isolation | v1.1 | 1/2 | In Progress | - |
 | 6. Storage Limits | v1.1 | 0/? | Not started | - |
 | 7. Build Tooling Migration | v1.1 | 0/? | Not started | - |
 
