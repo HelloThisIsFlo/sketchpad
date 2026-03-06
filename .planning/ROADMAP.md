@@ -21,7 +21,7 @@
 
 **Milestone Goal:** Each authenticated user gets their own isolated sketchpad, segregated by OAuth username.
 
-- [ ] **Phase 5: Per-User Storage Isolation** - Scope read/write tools to per-user directories derived from OAuth identity
+- [x] **Phase 5: Per-User Storage Isolation** - Scope read/write tools to per-user directories derived from OAuth identity
 - [ ] **Phase 6: Storage Limits** - Enforce per-user and global size limits on writes
 - [ ] **Phase 7: Build Tooling Migration** - Replace Makefile with Justfile and update CI
 
@@ -40,8 +40,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — TDD: user identity resolution module with sanitization and path traversal defense
-- [ ] 05-02-PLAN.md — Wire user identity into read/write tools with per-user paths
+- [x] 05-01-PLAN.md — TDD: user identity resolution module with sanitization and path traversal defense
+- [x] 05-02-PLAN.md — Wire user identity into read/write tools with per-user paths
 
 ### Phase 6: Storage Limits
 **Goal**: Write operations are bounded by configurable per-user and global size limits
@@ -81,7 +81,7 @@ Phases execute in numeric order. Phase 7 is independent of 5-6 and could run in 
 | 2. MCP Server + OAuth | v1.0 | 5/5 | Complete | 2026-03-04 |
 | 3. Deploy + Integration | v1.0 | 3/3 | Complete | 2026-03-05 |
 | 4. Hardening | v1.0 | 2/2 | Complete | 2026-03-05 |
-| 5. Per-User Storage Isolation | v1.1 | 1/2 | In Progress | - |
+| 5. Per-User Storage Isolation | v1.1 | 2/2 | Complete | 2026-03-06 |
 | 6. Storage Limits | v1.1 | 0/? | Not started | - |
 | 7. Build Tooling Migration | v1.1 | 0/? | Not started | - |
 

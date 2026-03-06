@@ -11,7 +11,7 @@ Requirements for multi-user milestone. Each maps to roadmap phases.
 
 - [x] **ISOL-01**: Each authenticated user's sketchpad is stored in a per-user directory (`/data/{username}/sketchpad.md`) derived from `TokenClaim("login")`
 - [x] **ISOL-02**: Path traversal is prevented via `Path.resolve()` + `is_relative_to()` defense-in-depth check
-- [ ] **ISOL-03**: User directory is auto-created on first `write_file` call
+- [x] **ISOL-03**: User directory is auto-created on first `write_file` call
 - [x] **ISOL-04**: Username is sanitized to filesystem-safe characters before use as directory name
 
 ### Storage Limits
@@ -57,7 +57,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | ISOL-01 | Phase 5 | Complete |
 | ISOL-02 | Phase 5 | Complete |
-| ISOL-03 | Phase 5 | Pending |
+| ISOL-03 | Phase 5 | Complete |
 | ISOL-04 | Phase 5 | Complete |
 | STOR-01 | Phase 6 | Pending |
 | STOR-02 | Phase 6 | Pending |
