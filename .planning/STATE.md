@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Multi-Users
-status: in-progress
-stopped_at: Completed 07-01 ruff + Justfile
-last_updated: "2026-03-06T23:39:00Z"
-last_activity: 2026-03-06 — Completed 07-01 ruff + Justfile
+status: completed
+stopped_at: Completed 07-02 CI pipeline + Makefile cleanup (Phase 7 complete)
+last_updated: "2026-03-06T23:43:52.713Z"
+last_activity: 2026-03-06 — Completed 07-02 CI pipeline + Makefile cleanup
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 3
-  percent: 90
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Current Position
 
 Phase: 7 of 7 (Build Tooling Migration)
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-03-06 — Completed 07-01 ruff + Justfile
+Plan: 2 of 2 complete
+Status: Complete
+Last activity: 2026-03-06 — Completed 07-02 CI pipeline + Makefile cleanup
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 3.2min
-- Total execution time: 51min
+- Total plans completed: 17
+- Average duration: 3.1min
+- Total execution time: 52min
 
 **By Phase:**
 
@@ -52,8 +52,9 @@ Progress: [█████████░] 90%
 | Phase 05 P02 | 3min | 2 tasks | 2 files |
 | 6. Storage Limits | 1/1 | 3min | 3.0min |
 | Phase 06 P01 | 3min | 2 tasks | 5 files |
-| 7. Build Tooling | 1/2 | 2min | 2.0min |
+| 7. Build Tooling | 2/2 | 3min | 1.5min |
 | Phase 07 P01 | 2min | 2 tasks | 9 files |
+| Phase 07 P02 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent: No slugify library needed -- GitHub usernames already filesystem-safe; l
 - [Phase 06]: SIZE_LIMIT replaced by MAX_STORAGE_USER (20KB) and MAX_STORAGE_GLOBAL (50MB) -- hard write-time enforcement replaces soft read-time warning
 - [Phase 07]: Included I (isort) rules in ruff lint selection -- auto-fixed 6 import sorting violations
 - [Phase 07]: Installed just via Homebrew (system tool, not Python dependency)
+- [Phase 07]: Pinned just-version to '1' in CI to prevent breakage on major version bumps
 
 ### Pending Todos
 
@@ -77,6 +79,6 @@ None (per-user segregation is now the active milestone).
 
 ## Session Continuity
 
-Last session: 2026-03-06T23:39:00Z
-Stopped at: Completed 07-01 ruff + Justfile
-Resume file: .planning/phases/07-build-tooling-migration/07-02-PLAN.md
+Last session: 2026-03-06T23:43:52.074Z
+Stopped at: Completed 07-02 CI pipeline + Makefile cleanup (Phase 7 complete)
+Resume file: None
