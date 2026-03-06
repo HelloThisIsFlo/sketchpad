@@ -21,7 +21,7 @@ Requirements for multi-user milestone. Each maps to roadmap phases.
 
 ### Build Tooling
 
-- [ ] **BUILD-01**: Justfile replaces Makefile with 1:1 translation of all recipes
+- [x] **BUILD-01**: Justfile replaces Makefile with 1:1 translation of all recipes
 - [ ] **BUILD-02**: GitHub Actions CI workflow uses `setup-just` action instead of `make`
 
 ## Future Requirements
@@ -61,7 +61,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ISOL-04 | Phase 5 | Complete |
 | STOR-01 | Phase 6 | Complete |
 | STOR-02 | Phase 6 | Complete |
-| BUILD-01 | Phase 7 | Pending |
+| BUILD-01 | Phase 7 | Complete |
 | BUILD-02 | Phase 7 | Pending |
 
 **Coverage:**
