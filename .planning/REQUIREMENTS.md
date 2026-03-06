@@ -1,0 +1,74 @@
+# Requirements: Sketchpad
+
+**Defined:** 2026-03-06
+**Core Value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
+
+## v1.1 Requirements
+
+Requirements for multi-user milestone. Each maps to roadmap phases.
+
+### User Isolation
+
+- [ ] **ISOL-01**: Each authenticated user's sketchpad is stored in a per-user directory (`/data/{username}/sketchpad.md`) derived from `TokenClaim("login")`
+- [ ] **ISOL-02**: Path traversal is prevented via `Path.resolve()` + `is_relative_to()` defense-in-depth check
+- [ ] **ISOL-03**: User directory is auto-created on first `write_file` call
+- [ ] **ISOL-04**: Username is sanitized to filesystem-safe characters before use as directory name
+
+### Storage Limits
+
+- [ ] **STOR-01**: `write_file` rejects content exceeding a configurable per-user size limit (env var)
+- [ ] **STOR-02**: `write_file` rejects writes when total data directory exceeds a configurable global size limit (env var)
+
+### Build Tooling
+
+- [ ] **BUILD-01**: Justfile replaces Makefile with 1:1 translation of all recipes
+- [ ] **BUILD-02**: GitHub Actions CI workflow uses `setup-just` action instead of `make`
+
+## Future Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Collaboration
+
+- **COLLAB-01**: User can share their sketchpad with another user (read-only)
+- **COLLAB-02**: User can share their sketchpad with another user (read-write)
+
+### Multi-Provider Identity
+
+- **IDENT-01**: User's sketchpad persists across OAuth provider changes (e.g., GitHub → Google)
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| User admin/management UI | Self-service via OAuth; no admin needed |
+| Cross-user collaboration | Each sketchpad is fully isolated for v1.1 |
+| Identity linking across providers | Provider switch = new sketchpad (accepted tradeoff) |
+| NFS-level or K8s-level storage quotas | NFS doesn't enforce PVC limits; app-level is reliable |
+| User profiles or display names | Not needed — OAuth username is sufficient |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| ISOL-01 | — | Pending |
+| ISOL-02 | — | Pending |
+| ISOL-03 | — | Pending |
+| ISOL-04 | — | Pending |
+| STOR-01 | — | Pending |
+| STOR-02 | — | Pending |
+| BUILD-01 | — | Pending |
+| BUILD-02 | — | Pending |
+
+**Coverage:**
+- v1.1 requirements: 8 total
+- Mapped to phases: 0
+- Unmapped: 8 ⚠️
+
+---
+*Requirements defined: 2026-03-06*
+*Last updated: 2026-03-06 after initial definition*
