@@ -3,7 +3,7 @@ SHA    := $(shell git rev-parse --short HEAD)
 TAG    := sha-$(SHA)
 NS     := sketchpad
 
-.PHONY: build push deploy all status
+.PHONY: build push deploy restart all status
 
 build:
 	docker buildx build --platform linux/amd64 -t $(IMAGE):$(TAG) -t $(IMAGE):latest --load .
@@ -14,6 +14,10 @@ push:
 
 deploy:
 	kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml -n $(NS)
+	kubectl rollout status deployment/sketchpad -n $(NS) --timeout=120s
+
+restart:
+	kubectl rollout restart deployment/sketchpad -n $(NS)
 	kubectl rollout status deployment/sketchpad -n $(NS) --timeout=120s
 
 all: build push deploy
