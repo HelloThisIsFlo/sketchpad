@@ -1,605 +1,414 @@
-# Architecture Research
+# Architecture: Per-User Storage Isolation
 
-**Domain:** Remote MCP server with OAuth 2.1 — Python, Kubernetes, Cloudflare Tunnel
-**Researched:** 2026-03-02
-**Confidence:** HIGH (official MCP spec, official Cloudflare docs, FastMCP docs, verified against Python SDK source)
+**Domain:** Per-user sketchpad isolation + Makefile-to-Just migration for existing FastMCP 3.1.0 MCP server
+**Researched:** 2026-03-06
+**Confidence:** HIGH (verified against installed FastMCP 3.1.0 source code and existing project files)
 
 ---
 
-## Standard Architecture
-
-### System Overview
+## System Overview (v1.1 changes highlighted)
 
 ```
 Internet
-    │
-    ▼
-┌──────────────────────────────────────────────┐
-│  Cloudflare Edge (DNS + TLS termination)      │
-│  mcp.yourdomain.com → Cloudflare Tunnel       │
-└──────────────────────────┬───────────────────┘
-                           │ encrypted outbound tunnel
-                           ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  Kubernetes Cluster (Talos OS, home network / CGNAT)              │
-│                                                                    │
-│  ┌──────────────────────────────────────────────────────────┐     │
-│  │  Namespace: sketchpad                                     │     │
-│  │                                                           │     │
-│  │  ┌─────────────────────┐    ┌────────────────────────┐  │     │
-│  │  │  Pod: mcp-server     │    │  Pod: cloudflared      │  │     │
-│  │  │  ┌───────────────┐  │    │  (adjacent Deployment) │  │     │
-│  │  │  │ FastMCP +     │  │    │  Routes tunnel traffic │  │     │
-│  │  │  │ GitHubProvider│  │    │  to mcp-server Service │  │     │
-│  │  │  │ uvicorn ASGI  │  │    └────────────┬───────────┘  │     │
-│  │  │  │ :8000/mcp     │  │                 │               │     │
-│  │  │  └───────┬───────┘  │                 │ HTTP          │     │
-│  │  │          │ PVC mount │                 ▼               │     │
-│  │  │  ┌───────▼───────┐  │    ┌────────────────────────┐  │     │
-│  │  │  │ /data/        │  │◄───│  Service: mcp-server    │  │     │
-│  │  │  │ sketchpad.txt │  │    │  ClusterIP :8000        │  │     │
-│  │  │  └───────────────┘  │    └────────────────────────┘  │     │
-│  │  └─────────────────────┘                                 │     │
-│  │                                                           │     │
-│  │  ┌──────────────────┐                                    │     │
-│  │  │  PVC: sketchpad  │  (bound to StorageClass)           │     │
-│  │  └──────────────────┘                                    │     │
-│  └──────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────┘
-
-External:
-  GitHub OAuth API (api.github.com) ── called by GitHubProvider
-  Claude AI (claude.ai)             ── the MCP client
+    |
+    v
+Cloudflare Edge (unchanged)
+    |
+    v
+cloudflared Pod (unchanged)
+    |
+    v
+ClusterIP Service (unchanged)
+    |
+    v
+MCP Server Pod
+    |
+    +-- FastMCP + GitHubProvider (unchanged)
+    |
+    +-- Bearer token middleware (unchanged)
+    |
+    +-- Tool handlers: read_file / write_file
+    |       |
+    |       +-- [NEW] Extract GitHub username from AccessToken.claims["login"]
+    |       |
+    |       +-- [CHANGED] File path: /data/{username}/sketchpad.md
+    |       |   (was: /data/sketchpad.md)
+    |       |
+    |       v
+    +-- PVC: sketchpad-data
+            |
+            +-- /data/
+                +-- hellothisisflo/
+                |   +-- sketchpad.md
+                +-- other-user/
+                    +-- sketchpad.md
 ```
 
-### Component Responsibilities
-
-| Component | Responsibility | Implementation |
-|-----------|----------------|----------------|
-| FastMCP server | MCP protocol handler: tools, resource server logic | `FastMCP` + `@mcp.tool()` decorators |
-| GitHubProvider (OAuth layer) | Acts as auth server to Claude, OAuth client to GitHub; issues JWT tokens | `fastmcp.server.auth.providers.github.GitHubProvider` |
-| OAuth endpoints (auto-generated) | Serve `/.well-known/*`, `/register`, `/authorize`, `/token` | Mounted by FastMCP when `auth=` is set |
-| Bearer token middleware | Validate JWT on every MCP request before tool dispatch | Built into FastMCP auth layer |
-| Tool handlers | Read/write single file from PVC mount | Two `@mcp.tool()` functions |
-| uvicorn | ASGI server, runs the FastMCP HTTP app | `mcp.http_app()` + uvicorn |
-| cloudflared (adjacent Pod) | Outbound tunnel to Cloudflare edge; receives internet traffic | Official `cloudflare/cloudflared` image |
-| ClusterIP Service | Internal DNS name for cloudflared → mcp-server routing | `mcp-server-service:8000` |
-| PersistentVolumeClaim | Persistent file storage surviving pod restarts | Bound via StorageClass (local-path or Longhorn) |
-| Secret: github-oauth | GitHub client_id + client_secret | K8s Secret, env vars injected |
-| Secret: cloudflare-tunnel-token | Cloudflare tunnel token | K8s Secret, env var injected |
+The architecture change is minimal: the tool handlers gain username awareness. Everything else (OAuth flow, middleware, K8s infrastructure, PVCs) is unchanged.
 
 ---
 
-## Recommended Project Structure
+## Integration Point: User Identity in Tool Handlers
 
-```
-sketchpad/
-├── server/
-│   ├── main.py              # FastMCP app, GitHubProvider setup, tool handlers
-│   ├── tools/
-│   │   └── sketchpad.py     # read_file() and write_file() tool implementations
-│   └── requirements.txt     # fastmcp, uvicorn
-├── k8s/
-│   ├── namespace.yaml        # namespace: sketchpad
-│   ├── secret-github.yaml    # GitHub client_id + client_secret (gitignored)
-│   ├── secret-tunnel.yaml    # Cloudflare tunnel token (gitignored)
-│   ├── pvc.yaml              # PVC for /data/sketchpad.txt
-│   ├── deployment-mcp.yaml   # MCP server Deployment + volume mount
-│   ├── service-mcp.yaml      # ClusterIP Service :8000
-│   └── deployment-cloudflared.yaml  # cloudflared adjacent Deployment
-├── .env.example              # GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, BASE_URL
-└── .planning/
-    └── research/
-        └── ARCHITECTURE.md  # this file
-```
+### How It Works
 
-### Structure Rationale
+FastMCP 3.1.0 provides two dependency injection mechanisms for accessing the authenticated user's identity inside `@mcp.tool` handlers:
 
-- **server/**: All Python source isolated from infra; can be developed and tested locally without K8s
-- **k8s/**: All manifests in one place; apply with `kubectl apply -f k8s/` for a single namespace
-- **secrets not committed**: `secret-*.yaml` files contain real credentials and must stay out of git
-- **tools/ subfolder**: Even with two trivial tools, keeps `main.py` clean; easy to expand for vault project
-
----
-
-## Architectural Patterns
-
-### Pattern 1: OAuth Proxy (Third-Party Auth Delegation)
-
-**What:** The MCP server acts as an OAuth 2.1 server to Claude (the MCP client) but delegates identity verification to GitHub as the upstream identity provider. The server issues its own JWT tokens to Claude after confirming the user authenticated with GitHub.
-
-**When to use:** When you want a personal identity provider (GitHub) without running your own user database.
-
-**Trade-offs:**
-- Pro: No user management, GitHub handles credentials
-- Pro: FastMCP's `GitHubProvider` abstracts the complexity
-- Con: Two OAuth hops (Claude → Server, Server → GitHub)
-- Con: Server must be reachable for the GitHub callback redirect
-
-**Key code pattern:**
+**Option A: `CurrentAccessToken()` dependency (recommended)**
 
 ```python
-from fastmcp import FastMCP
-from fastmcp.server.auth.providers.github import GitHubProvider
+from fastmcp.server.auth import AccessToken
+from fastmcp.server.dependencies import CurrentAccessToken
 
-auth = GitHubProvider(
-    client_id=os.environ["GITHUB_CLIENT_ID"],
-    client_secret=os.environ["GITHUB_CLIENT_SECRET"],
-    base_url="https://mcp.yourdomain.com",  # public URL for OAuth callbacks
-)
-
-mcp = FastMCP("Sketchpad", auth=auth)
-
-@mcp.tool()
-def read_file() -> str:
-    """Read the sketchpad file"""
-    with open("/data/sketchpad.txt", "r") as f:
-        return f.read()
-
-@mcp.tool()
-def write_file(content: str) -> str:
-    """Write content to the sketchpad file"""
-    with open("/data/sketchpad.txt", "w") as f:
-        f.write(content)
-    return "written"
-
-app = mcp.http_app()  # ASGI app for uvicorn
+@mcp.tool
+async def read_file(token: AccessToken = CurrentAccessToken()) -> str:
+    username = token.claims["login"]  # GitHub username
+    # ...
 ```
 
-### Pattern 2: Adjacent cloudflared Deployment (Not Sidecar)
+**Option B: `TokenClaim()` dependency (cleanest)**
 
-**What:** cloudflared runs as a separate Deployment (not a sidecar container in the MCP pod). It routes traffic to the MCP server via Kubernetes internal DNS (`http://mcp-server-service:8000`).
+```python
+from fastmcp.server.dependencies import TokenClaim
 
-**When to use:** Always for homelab/self-hosted setups. Sidecar would couple cloudflared restarts to app restarts.
-
-**Trade-offs:**
-- Pro: Independent scaling and restart of tunnel vs app
-- Pro: One cloudflared instance can serve multiple services
-- Con: Slightly more complex manifest structure (two Deployments)
-
-**Key K8s pattern:**
-
-```yaml
-# deployment-cloudflared.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cloudflared
-  namespace: sketchpad
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: cloudflared
-  template:
-    metadata:
-      labels:
-        app: cloudflared
-    spec:
-      containers:
-        - name: cloudflared
-          image: cloudflare/cloudflared:latest
-          env:
-            - name: TUNNEL_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: cloudflare-tunnel-token
-                  key: token
-          command:
-            - cloudflared
-            - tunnel
-            - --no-autoupdate
-            - --metrics
-            - 0.0.0.0:2000
-            - run
-          livenessProbe:
-            httpGet:
-              path: /ready
-              port: 2000
-            initialDelaySeconds: 10
-            periodSeconds: 10
+@mcp.tool
+async def read_file(username: str = TokenClaim("login")) -> str:
+    # username is automatically injected from the token
+    # ...
 ```
 
-### Pattern 3: MCP Server as Resource Server Only (draft spec)
+Both approaches are invisible to the MCP client (Claude AI). FastMCP's dependency injection system strips injected parameters from the tool's JSON schema, so Claude never sees `token` or `username` as a parameter it needs to provide.
 
-**What:** Per the MCP draft specification (2025), the MCP server's role is strictly as an OAuth 2.1 resource server — it validates tokens and serves tools. The OAuth endpoints (`/authorize`, `/token`, `/register`) are provided by the auth layer (FastMCP's GitHubProvider), not custom code.
+### What Claims Are Available
 
-**When to use:** Always. This is the current MCP spec pattern. Do not build custom auth endpoints.
+When a tool handler runs, FastMCP's `load_access_token` flow:
+1. Verifies the FastMCP JWT signature
+2. Looks up the upstream GitHub token via JTI mapping
+3. Calls `GitHubTokenVerifier.verify_token`, which hits `api.github.com/user`
+4. Returns an `AccessToken` with these claims:
 
-**Trade-offs:**
-- Pro: Correct per spec; Claude AI expects this structure
-- Pro: FastMCP handles all endpoint routing automatically
-- Con: Cannot skip auth layer for testing — must mock it
+| Claim | Type | Example | Use |
+|-------|------|---------|-----|
+| `sub` | `str` | `"12345678"` | GitHub numeric user ID (immutable) |
+| `login` | `str` | `"hellothisisflo"` | GitHub username (human-readable, can change) |
+| `name` | `str\|None` | `"Flo"` | Display name |
+| `email` | `str\|None` | `"flo@example.com"` | Primary email |
+| `avatar_url` | `str` | `"https://..."` | Avatar URL |
+| `github_user_data` | `dict` | `{...}` | Full GitHub API response |
 
-**What the MCP server exposes (via FastMCP auto-generation):**
+**Confidence:** HIGH -- verified by reading `GitHubTokenVerifier.verify_token` at line 130-143 of the installed `fastmcp/server/auth/providers/github.py`.
 
-| Endpoint | Purpose | Standard |
-|----------|---------|---------|
-| `/.well-known/oauth-protected-resource` | Points Claude to the auth server | RFC 9728 |
-| `/.well-known/oauth-authorization-server` | Auth server metadata (when server is its own AS) | RFC 8414 |
-| `POST /register` | Dynamic Client Registration | RFC 7591 |
-| `GET /authorize` | Authorization endpoint — redirects to GitHub | OAuth 2.1 |
-| `POST /token` | Token exchange (auth code → JWT) | OAuth 2.1 |
-| `POST /mcp` | MCP JSON-RPC calls (protected by Bearer middleware) | MCP spec |
-| `GET /mcp` | MCP SSE stream (protected by Bearer middleware) | MCP spec |
+### Which Claim to Use as Folder Name
+
+**Use `login` (GitHub username), not `sub` (numeric ID).**
+
+Rationale:
+- `login` is human-readable: `/data/hellothisisflo/sketchpad.md` vs `/data/12345678/sketchpad.md`
+- GitHub usernames are already filesystem-safe: alphanumeric + hyphens only, 1-39 chars, no consecutive hyphens, no leading/trailing hyphens
+- No sanitization needed -- the username can be used directly as a directory name
+- Username rename = new sketchpad is acceptable (documented in PROJECT.md as a key decision)
+- `sub` would survive username renames but produces opaque folder names that are painful to debug on the NFS share
 
 ---
 
-## Data Flow
+## Modified Components
 
-### 1. Discovery + Registration Flow (first connection)
+### 1. `src/sketchpad/tools.py` (MODIFIED)
+
+The only source file that changes. Tool handlers gain a `username` parameter via `TokenClaim("login")` and construct per-user paths.
+
+**Current code:**
+```python
+def register_tools(mcp):
+    @mcp.tool
+    def read_file() -> str:
+        cfg = get_config()
+        sketchpad_path = Path(cfg["DATA_DIR"]) / cfg["SKETCHPAD_FILENAME"]
+        # ...
+
+    @mcp.tool
+    def write_file(content: str, mode: str = "replace") -> str:
+        cfg = get_config()
+        sketchpad_path = Path(cfg["DATA_DIR"]) / cfg["SKETCHPAD_FILENAME"]
+        # ...
+```
+
+**New code:**
+```python
+from fastmcp.server.dependencies import TokenClaim
+
+def register_tools(mcp):
+    @mcp.tool
+    async def read_file(username: str = TokenClaim("login")) -> str:
+        cfg = get_config()
+        sketchpad_path = Path(cfg["DATA_DIR"]) / username / cfg["SKETCHPAD_FILENAME"]
+        # ...
+
+    @mcp.tool
+    async def write_file(
+        content: str,
+        mode: str = "replace",
+        username: str = TokenClaim("login"),
+    ) -> str:
+        cfg = get_config()
+        sketchpad_path = Path(cfg["DATA_DIR"]) / username / cfg["SKETCHPAD_FILENAME"]
+        # ...
+```
+
+**Key changes:**
+- Functions become `async` (required by FastMCP's DI system for `TokenClaim`)
+- `username` parameter added with `TokenClaim("login")` default -- invisible to Claude AI
+- Path changes from `DATA_DIR/sketchpad.md` to `DATA_DIR/{username}/sketchpad.md`
+- `write_file` already calls `sketchpad_path.parent.mkdir(parents=True, exist_ok=True)`, so user directories are auto-created on first write
+
+### 2. `Makefile` -> `justfile` (NEW file, old file removed)
+
+**Current Makefile targets:**
+
+| Target | Command |
+|--------|---------|
+| `build` | `docker buildx build --platform linux/amd64 -t IMAGE:TAG -t IMAGE:latest --load .` |
+| `push` | `docker push IMAGE:TAG && docker push IMAGE:latest` |
+| `deploy` | `kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml && rollout status` |
+| `restart` | `kubectl rollout restart && rollout status` |
+| `all` | `build push deploy` |
+| `status` | `kubectl get pods && kubectl get svc` |
+
+**New justfile:**
+
+```just
+image  := "ghcr.io/hellothisisflo/sketchpad"
+sha    := `git rev-parse --short HEAD`
+tag    := "sha-" + sha
+ns     := "sketchpad"
+
+# Build container image for linux/amd64
+build:
+    docker buildx build --platform linux/amd64 -t {{image}}:{{tag}} -t {{image}}:latest --load .
+
+# Push image to GHCR
+push:
+    docker push {{image}}:{{tag}}
+    docker push {{image}}:latest
+
+# Apply K8s manifests and wait for rollout
+deploy:
+    kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml -n {{ns}}
+    kubectl rollout status deployment/sketchpad -n {{ns}} --timeout=120s
+
+# Rolling restart
+restart:
+    kubectl rollout restart deployment/sketchpad -n {{ns}}
+    kubectl rollout status deployment/sketchpad -n {{ns}} --timeout=120s
+
+# Build, push, and deploy
+all: build push deploy
+
+# Show pod and service status
+status:
+    kubectl get pods -n {{ns}}
+    kubectl get svc -n {{ns}}
+```
+
+**Key syntax differences from Make:**
+- Variables use `:=` (same) but are referenced with `{{var}}` (not `$(VAR)`)
+- Backtick evaluation for shell commands: `` sha := `git rev-parse --short HEAD` ``
+- No `.PHONY` needed -- Just is a command runner, not a build system
+- Comments with `#` above recipes serve as documentation (shown in `just --list`)
+- No tab-vs-spaces ambiguity -- Just accepts either
+
+### 3. No other files change
+
+| File | Status | Notes |
+|------|--------|-------|
+| `src/sketchpad/server.py` | Unchanged | `create_app()` already passes `mcp` to `register_tools()` |
+| `src/sketchpad/config.py` | Unchanged | `DATA_DIR` config is already correct |
+| `src/sketchpad/middleware.py` | Unchanged | Origin validation is path-based, not user-based |
+| `src/sketchpad/__main__.py` | Unchanged | App startup is not affected |
+| `k8s/deployment.yaml` | Unchanged | PVC mount at `/data` already accommodates subdirectories |
+| `k8s/pvc.yaml` | Unchanged | Both PVCs are already sized at 1Gi (ample for multi-user text) |
+| `k8s/service.yaml` | Unchanged | |
+
+---
+
+## Data Flow (v1.1 -- changes in steady-state tool calls only)
 
 ```
 Claude AI
-    │
-    │ 1. POST /mcp (no token)
-    ▼
-MCP Server
-    │ 2. HTTP 401 + WWW-Authenticate: Bearer resource_metadata=".../.well-known/oauth-protected-resource"
-    ▼
-Claude AI
-    │ 3. GET /.well-known/oauth-protected-resource
-    ▼
-MCP Server → returns JSON: { authorization_servers: ["https://mcp.yourdomain.com"] }
-    │
-Claude AI
-    │ 4. GET /.well-known/oauth-authorization-server
-    ▼
-MCP Server → returns metadata: { registration_endpoint, authorization_endpoint, token_endpoint, ... }
-    │
-Claude AI
-    │ 5. POST /register  (Dynamic Client Registration)
-    ▼
-MCP Server (GitHubProvider) → stores client, returns { client_id, client_secret }
-    │
-    ▼  (Registration complete, proceed to auth flow)
-```
-
-### 2. Authorization Flow (login with GitHub)
-
-```
-Claude AI
-    │ 6. Open browser to GET /authorize?client_id=...&code_challenge=...&resource=...
-    ▼
-MCP Server (GitHubProvider)
-    │ 7. Redirect to GitHub /login/oauth/authorize
-    ▼
-GitHub
-    │ 8. User logs in, authorizes
-    │ 9. Redirect to https://mcp.yourdomain.com/callback?code=GITHUB_CODE
-    ▼
-MCP Server (GitHubProvider callback handler)
-    │ 10. Exchange GITHUB_CODE → GitHub access token
-    │ 11. Verify token with GitHub API (GET https://api.github.com/user)
-    │ 12. Check user is in allowed list (single-user: just you)
-    │ 13. Generate MCP-scoped JWT, store auth code mapping
-    │ 14. Redirect to Claude's callback URL?code=MCP_AUTH_CODE
-    ▼
-Claude AI
-    │ 15. POST /token  { code=MCP_AUTH_CODE, code_verifier=... }
-    ▼
-MCP Server (GitHubProvider)
-    │ 16. Verify PKCE code_verifier against stored challenge
-    │ 17. Return { access_token: JWT, refresh_token: ... }
-    ▼
-Claude AI (holds JWT)
-```
-
-### 3. Tool Call Flow (steady state)
-
-```
-Claude AI
-    │ POST /mcp  Authorization: Bearer <JWT>
-    │ Body: { method: "tools/call", params: { name: "read_file" } }
-    ▼
-Bearer middleware (FastMCP)
-    │ Validate JWT signature + expiry + audience
-    ▼
-Tool handler: read_file()
-    │ open("/data/sketchpad.txt")
-    ▼
-PersistentVolume (K8s PVC)
-    │ file contents
-    ▼
+    | POST /mcp  Authorization: Bearer <JWT>
+    | Body: { method: "tools/call", params: { name: "read_file" } }
+    v
+Bearer middleware (FastMCP, unchanged)
+    | Validate JWT -> swap for GitHub token -> call api.github.com/user
+    | Returns AccessToken with claims: { sub: "12345", login: "hellothisisflo", ... }
+    v
+FastMCP DI system (unchanged but newly used)
+    | Resolves TokenClaim("login") -> "hellothisisflo"
+    | Injects as `username` parameter
+    v
+Tool handler: read_file(username="hellothisisflo")
+    | path = /data/hellothisisflo/sketchpad.md     [NEW: was /data/sketchpad.md]
+    v
+PVC: sketchpad-data (unchanged)
+    | file contents from /data/hellothisisflo/sketchpad.md
+    v
 FastMCP response: { result: "file contents..." }
-    ▼
+    v
 Claude AI
 ```
 
-### 4. Kubernetes Traffic Flow
-
-```
-Claude AI (phone)
-    │ HTTPS mcp.yourdomain.com/mcp
-    ▼
-Cloudflare Edge (TLS termination, DNS)
-    │ Cloudflare Tunnel (outbound from cluster)
-    ▼
-cloudflared Pod (namespace: sketchpad)
-    │ HTTP http://mcp-server-service:8000
-    ▼
-ClusterIP Service (mcp-server-service)
-    │ routes to Pod selector app=mcp-server
-    ▼
-MCP Server Pod (port 8000)
-    │ /data/sketchpad.txt via PVC mount
-    ▼
-PersistentVolume
-```
+**Security boundary:** Each user can only access their own subdirectory because:
+1. The username comes from the validated GitHub OAuth token, not from user input
+2. GitHub usernames cannot contain `/`, `..`, or any path traversal characters (alphanumeric + hyphens only)
+3. There is no tool parameter for "which user's sketchpad" -- the username is server-side injected
 
 ---
 
-## Kubernetes Manifests Structure
+## Storage Layout on PVC
 
-### PVC
+```
+/data/                          (PVC: sketchpad-data, mounted at /data)
+    hellothisisflo/
+        sketchpad.md            (auto-created on first write_file call)
+    another-github-user/
+        sketchpad.md
 
-```yaml
-# pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: sketchpad-pvc
-  namespace: sketchpad
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-  storageClassName: local-path   # adjust to match cluster StorageClass
+/state/                         (PVC: sketchpad-state, unchanged)
+    <FileTreeStore encrypted OAuth state files>
 ```
 
-### MCP Server Deployment
-
-```yaml
-# deployment-mcp.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mcp-server
-  namespace: sketchpad
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mcp-server
-  template:
-    metadata:
-      labels:
-        app: mcp-server
-    spec:
-      containers:
-        - name: mcp-server
-          image: your-registry/sketchpad-mcp:latest
-          ports:
-            - containerPort: 8000
-          env:
-            - name: GITHUB_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: github-oauth
-                  key: client_id
-            - name: GITHUB_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: github-oauth
-                  key: client_secret
-            - name: BASE_URL
-              value: "https://mcp.yourdomain.com"
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: sketchpad-pvc
-```
-
-### ClusterIP Service
-
-```yaml
-# service-mcp.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: mcp-server-service
-  namespace: sketchpad
-spec:
-  selector:
-    app: mcp-server
-  ports:
-    - port: 8000
-      targetPort: 8000
-  type: ClusterIP
-```
-
-### Cloudflare Tunnel Secret + Deployment
-
-```yaml
-# secret-tunnel.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cloudflare-tunnel-token
-  namespace: sketchpad
-stringData:
-  token: <YOUR_CLOUDFLARE_TUNNEL_TOKEN>
----
-# deployment-cloudflared.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cloudflared
-  namespace: sketchpad
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: cloudflared
-  template:
-    metadata:
-      labels:
-        app: cloudflared
-    spec:
-      containers:
-        - name: cloudflared
-          image: cloudflare/cloudflared:latest
-          env:
-            - name: TUNNEL_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: cloudflare-tunnel-token
-                  key: token
-          command:
-            - cloudflared
-            - tunnel
-            - --no-autoupdate
-            - --metrics
-            - 0.0.0.0:2000
-            - run
-          livenessProbe:
-            httpGet:
-              path: /ready
-              port: 2000
-            initialDelaySeconds: 10
-            periodSeconds: 10
-```
-
-Cloudflare dashboard tunnel configuration: public hostname `mcp.yourdomain.com` → service `http://mcp-server-service.sketchpad.svc.cluster.local:8000`
+- User directories are created lazily by `write_file` (the existing `sketchpad_path.parent.mkdir(parents=True, exist_ok=True)` already handles this)
+- `read_file` for a user who has never written returns the `WELCOME_MESSAGE` (existing behavior via `if not sketchpad_path.exists()`)
+- No migration of v1.0 data -- fresh start for v1.1 (confirmed in PROJECT.md key decisions)
 
 ---
 
-## Anti-Patterns
+## Patterns to Follow
 
-### Anti-Pattern 1: Building Custom OAuth Endpoints
+### Pattern 1: TokenClaim Dependency Injection
 
-**What people do:** Implement `/authorize`, `/token`, `/register` from scratch in Python.
+**What:** Use `TokenClaim("login")` to inject the GitHub username into tool handlers without exposing it as a client-visible parameter.
 
-**Why it's wrong:** FastMCP's `GitHubProvider` does this correctly in ~3 lines of config. Rolling custom auth introduces PKCE bugs, incorrect WWW-Authenticate headers, and spec compliance failures that will silently break Claude AI's auth flow.
+**Why this pattern:**
+- Cleanest API: single parameter, auto-injected, type is `str`
+- No boilerplate: no need to import `AccessToken`, no need to unwrap `.claims["login"]`
+- FastMCP strips DI parameters from the tool's JSON schema -- Claude AI never sees them
+- If the claim is missing, FastMCP raises `RuntimeError` with a clear message listing available claims
 
-**Do this instead:** Use `FastMCP(..., auth=GitHubProvider(...))`. The endpoints are auto-mounted.
+**When to use:** When you need exactly one claim value (username, user ID, email).
 
-### Anti-Pattern 2: Cloudflare Tunnel as Sidecar
+**When NOT to use:** When you need multiple claims -- use `CurrentAccessToken()` instead and access `.claims` dict.
 
-**What people do:** Add cloudflared as a second container in the same Pod as the MCP server.
+### Pattern 2: Lazy Directory Creation
 
-**Why it's wrong:** Couples tunnel restarts to app restarts. Can't scale or update them independently. The MCP server loses its connection during any cloudflared update.
+**What:** Create user directories on first write, not eagerly.
 
-**Do this instead:** Two separate Deployments. cloudflared routes to the MCP server via the ClusterIP Service DNS name.
+**Why:** Avoid pre-provisioning. The user directory is created by the `write_file` tool's existing `mkdir(parents=True, exist_ok=True)`. For `read_file`, a missing directory simply returns the welcome message.
 
-### Anti-Pattern 3: HostPath Storage
+### Pattern 3: Just as Command Runner (not Build System)
 
-**What people do:** Use `hostPath` volume mounts to skip PVC complexity.
+**What:** Replace Make with Just for project commands (build, push, deploy, status).
 
-**Why it's wrong:** If the pod reschedules to a different node (even on a single-node homelab after a node rebuild), the data is gone. HostPath also requires knowing the specific node.
-
-**Do this instead:** PVC backed by a StorageClass (local-path-provisioner or Longhorn). Talos ships without a default StorageClass — check/install one before deploying.
-
-### Anti-Pattern 4: Exposing the MCP Server Port Directly
-
-**What people do:** Open port 8000 on the node via NodePort or LoadBalancer service.
-
-**Why it's wrong:** Behind CGNAT there are no inbound ports. Also removes Cloudflare's TLS termination and DDoS protection.
-
-**Do this instead:** ClusterIP (internal only) for the MCP service. Cloudflare Tunnel as the sole internet ingress path.
-
-### Anti-Pattern 5: Treating the 2025-03-26 Spec as Current
-
-**What people do:** Follow examples based on the 2025-03-26 MCP authorization spec.
-
-**Why it's wrong:** The current draft spec (2025) changed the architecture: the MCP server is now strictly a Resource Server. The new primary discovery mechanism is Protected Resource Metadata (RFC 9728) via WWW-Authenticate headers, not direct auth server metadata at the MCP server root. Dynamic Client Registration (RFC 7591) has been demoted to optional/legacy in favor of Client ID Metadata Documents.
-
-**Do this instead:** Use FastMCP's GitHubProvider which tracks spec changes. Verify against `modelcontextprotocol.io/specification/draft/basic/authorization` before implementing any custom auth logic.
+**Why:**
+- Just is a command runner, not a build system -- it does not track file timestamps or dependencies
+- This project uses Make purely as a command runner (no file targets, no dependency tracking)
+- Just has cleaner syntax: `{{var}}` instead of `$(VAR)`, backtick evaluation, no `.PHONY`, no tab-vs-spaces issue
+- Just shows recipe descriptions from comments in `just --list`
 
 ---
 
-## Integration Points
+## Anti-Patterns to Avoid
 
-### External Services
+### Anti-Pattern 1: Using `sub` (numeric ID) as folder name
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| GitHub OAuth API | GitHubProvider calls `api.github.com/user` to verify opaque tokens | GitHub tokens are not JWTs; must call API to validate |
-| Cloudflare Tunnel | cloudflared Pod holds outbound persistent connection to Cloudflare edge | Token stored in K8s Secret; configure hostname routing in Cloudflare dashboard |
-| Claude AI (client) | Acts as OAuth 2.1 public client with PKCE; calls all standard endpoints | Claude requires DCR, PKCE, and Protected Resource Metadata |
+**What:** Using the GitHub numeric user ID (`sub` claim) as the directory name.
 
-### Internal Boundaries
+**Why bad:** Produces opaque paths like `/data/12345678/sketchpad.md` that are impossible to debug when SSH'ing into the NAS. The numeric ID is stable across username renames, but username renames are a documented acceptable trade-off for this project.
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| cloudflared → mcp-server | HTTP over ClusterIP Service DNS | No auth between these; auth is enforced by MCP server |
-| FastMCP auth layer → tool handlers | Internal Python function call after Bearer token validated | `get_access_token()` context var available in tools if user identity needed |
-| MCP server pod → PVC | POSIX file I/O at `/data/sketchpad.txt` | ReadWriteOnce; single pod only |
+**Do instead:** Use `login` (GitHub username). It is human-readable and filesystem-safe without sanitization.
+
+### Anti-Pattern 2: Sanitizing GitHub usernames for filesystem use
+
+**What:** Adding a sanitization layer (regex replacement, slugification) to GitHub usernames before using them as directory names.
+
+**Why bad:** Unnecessary complexity. GitHub usernames are already restricted to `[a-zA-Z0-9-]` with max 39 chars, no leading/trailing hyphens, no consecutive hyphens. This is already a valid POSIX directory name. Adding sanitization creates a mapping layer that could introduce collisions or confusion.
+
+**Do instead:** Use the username directly. Trust GitHub's existing validation.
+
+### Anti-Pattern 3: Passing username as a tool parameter
+
+**What:** Adding a `username` parameter to the tool's public schema and letting Claude AI provide it.
+
+**Why bad:** Any MCP client could pass any username, accessing other users' data. The username must come from the server-side token, not client input.
+
+**Do instead:** Use `TokenClaim("login")` which is server-injected and invisible to the client.
+
+### Anti-Pattern 4: Modifying server.py or config.py for per-user isolation
+
+**What:** Adding user-awareness to the config system or server factory.
+
+**Why bad:** Per-user isolation is a tool-level concern, not a server-level concern. The server authenticates users and provides identity via DI. The tools decide what to do with that identity. Config and server setup remain user-agnostic.
+
+**Do instead:** All per-user logic lives in `tools.py`. Config stays generic (`DATA_DIR` is just a base path).
 
 ---
 
-## Build Order (Component Dependencies)
+## Build Order (dependency-aware)
 
-The components have strict dependencies that determine phase/task ordering:
+The changes for v1.1 have a natural ordering based on dependencies:
 
 ```
-StorageClass (exists or install)
-    └──► PVC (requires StorageClass)
-             └──► MCP Server Pod (requires PVC)
-
-GitHub OAuth App (register at github.com)
-    └──► GitHub Secret (requires client_id + client_secret)
-             └──► MCP Server Pod (requires env vars)
-
-Cloudflare Tunnel (create in dashboard)
-    └──► Tunnel Token Secret (requires token)
-             └──► cloudflared Deployment (requires Secret)
-                       └──► Cloudflare hostname routing (configure after cloudflared is running)
-
-MCP Server code (FastMCP + GitHubProvider)
-    └──► Container image (build from code)
-             └──► MCP Server Pod (requires image + PVC + Secret)
-
-MCP Server Pod + Service + Cloudflare hostname routing
-    └──► End-to-end OAuth test from Claude AI
+1. justfile (no dependencies -- can be done first or in parallel)
+      |
+      v
+2. tools.py (depends on understanding TokenClaim API -- this research)
+      |
+      v
+3. Delete Makefile (after justfile is verified working)
+      |
+      v
+4. Test locally (depends on tools.py changes)
+      |
+      v
+5. Build + deploy via justfile (depends on all above)
 ```
 
-**Recommended build sequence:**
+**Suggested phases:**
 
-1. Register GitHub OAuth App → get client_id + client_secret
-2. Verify/install StorageClass on Talos cluster
-3. Create K8s namespace + Secrets (GitHub + tunnel token)
-4. Write FastMCP server code + tools (testable locally with `mcp.run()`)
-5. Build and push container image
-6. Apply PVC + MCP server Deployment + Service
-7. Apply cloudflared Deployment
-8. Configure Cloudflare dashboard: hostname `mcp.yourdomain.com` → `http://mcp-server-service.sketchpad:8000`
-9. Test OAuth flow end-to-end from Claude AI
+| Phase | What | Why This Order |
+|-------|------|----------------|
+| 1 | Modify `tools.py` with `TokenClaim("login")` and per-user paths | Core feature; smallest change, highest value |
+| 2 | Create `justfile` + delete `Makefile` | Independent of Phase 1; can be done in parallel |
+| 3 | Test and deploy | Depends on both phases above |
+
+**Phase 1 is ~10 lines of code change** in a single file. Phase 2 is a straightforward syntax translation. Phase 3 is `just all` and manual verification from Claude AI.
 
 ---
 
-## Scaling Considerations
+## Component Boundaries (what owns what)
 
-This is a single-user personal tool. Scaling is not a concern.
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1 user (current) | Single replica, ReadWriteOnce PVC, no session affinity needed |
-| Multi-user (future) | Switch `stateless_http=True`, ReadWriteMany PVC or per-user paths, token storage backend (Redis/DB) |
-
-The main first bottleneck for a personal tool is not performance but auth state storage: FastMCP's default in-memory storage for OAuth client registrations and tokens will be lost on pod restarts. For a single-user tool this is acceptable (user re-authenticates once after restart). For any multi-user or production use, add a persistent storage backend.
+| Component | Owns | Does NOT own |
+|-----------|------|-------------|
+| `GitHubProvider` (FastMCP) | OAuth flow, JWT issuance, token validation, GitHub API calls | User directory management, file I/O |
+| FastMCP DI system | Resolving `TokenClaim("login")` from the `AccessToken` | Knowing what "login" means semantically |
+| `tools.py` | Per-user path construction, file read/write, directory creation | Authentication, token validation |
+| `config.py` | Base `DATA_DIR` path | Per-user subdirectory logic |
+| PVC `sketchpad-data` | Persistent storage at `/data` | User isolation (that is enforced by code, not filesystem permissions) |
 
 ---
 
 ## Sources
 
-- [MCP Authorization Specification (2025-03-26)](https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization) — HIGH confidence, official spec
-- [MCP Authorization Specification (draft)](https://modelcontextprotocol.io/specification/draft/basic/authorization) — HIGH confidence, current draft showing RFC 9728 as mandatory
-- [FastMCP OAuth Proxy docs](https://gofastmcp.com/servers/auth/oauth-proxy.md) — HIGH confidence, official FastMCP docs
-- [FastMCP HTTP deployment](https://gofastmcp.com/deployment/http.md) — HIGH confidence, official FastMCP docs
-- [FastMCP GitHub provider](https://gofastmcp.com/python-sdk/fastmcp-server-auth-providers-github.md) — HIGH confidence, official FastMCP docs
-- [Cloudflare Tunnel Kubernetes deployment guide](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/deployment-guides/kubernetes/) — HIGH confidence, official Cloudflare docs
-- [MCP Python SDK auth module source](https://github.com/modelcontextprotocol/python-sdk/blob/main/src/mcp/server/auth/provider.py) — HIGH confidence, official SDK
-- [MCP OAuth Gateway (atrawog) — architecture reference](https://github.com/atrawog/mcp-oauth-gateway) — MEDIUM confidence, community project showing validated patterns
-- [Azure remote MCP Python OAuth sample](https://github.com/Azure-Samples/remote-mcp-webapp-python-auth-oauth) — MEDIUM confidence, reference implementation showing endpoint structure
-- [Talos local storage docs](https://www.talos.dev/v1.10/kubernetes-guides/configuration/local-storage/) — HIGH confidence, official Talos docs
+- FastMCP 3.1.0 `GitHubTokenVerifier.verify_token` -- `/fastmcp/server/auth/providers/github.py` lines 66-150 (installed package, HIGH confidence)
+- FastMCP 3.1.0 `get_access_token` -- `/fastmcp/server/dependencies.py` lines 469-534 (installed package, HIGH confidence)
+- FastMCP 3.1.0 `CurrentAccessToken` and `TokenClaim` -- `/fastmcp/server/dependencies.py` lines 1286-1399 (installed package, HIGH confidence)
+- FastMCP 3.1.0 `AccessToken` class -- `/fastmcp/server/auth/auth.py` lines 54-57 (installed package, HIGH confidence)
+- FastMCP 3.1.0 `OAuthProxy.load_access_token` -- `/fastmcp/server/auth/oauth_proxy/proxy.py` lines 1384-1453 (installed package, HIGH confidence)
+- [GitHub username format](https://github.com/shinnn/github-username-regex) -- alphanumeric + hyphens, 1-39 chars (MEDIUM confidence, community reference)
+- [Just command runner manual](https://just.systems/man/en/) -- official documentation (HIGH confidence)
+- Project files: `src/sketchpad/tools.py`, `src/sketchpad/config.py`, `src/sketchpad/server.py`, `Makefile`, `k8s/deployment.yaml`, `k8s/pvc.yaml` (direct source, HIGH confidence)
 
 ---
 
-*Architecture research for: Remote MCP server with OAuth 2.1, Python, Kubernetes, Cloudflare Tunnel*
-*Researched: 2026-03-02*
+*Architecture research for: Per-user storage isolation integration with FastMCP 3.1.0*
+*Researched: 2026-03-06*

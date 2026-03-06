@@ -1,226 +1,181 @@
-# Pitfalls Research
+# Pitfalls Research: v1.1 Multi-User Isolation
 
-**Domain:** Remote MCP server with OAuth 2.1 (DCR + PKCE), Python, Kubernetes/Talos OS, Cloudflare Tunnel
-**Researched:** 2026-03-02
-**Confidence:** HIGH (majority of pitfalls confirmed by official docs, official GitHub issues, or multiple sources)
+**Domain:** Adding per-user storage isolation and Makefile-to-Just migration to an existing single-user MCP server
+**Researched:** 2026-03-06
+**Confidence:** HIGH (verified against FastMCP source code in the installed package, official docs, and GitHub issues)
 
 ---
 
 ## Critical Pitfalls
 
-These will cause a full restart of your OAuth implementation if you hit them.
+These will cause security vulnerabilities, data leaks between users, or complete feature failure.
 
 ---
 
-### Pitfall 1: GitHub Does Not Support DCR — You Must Build Your Own Authorization Server
+### Pitfall 1: Path Traversal via Unsanitized Username in Directory Path
 
 **What goes wrong:**
 
-The user plans to use GitHub as the "identity provider." The natural beginner assumption is: point the OAuth layer at GitHub, done. But GitHub OAuth Apps do not implement Dynamic Client Registration (RFC 7591). Claude.ai requires DCR to automatically register itself. If there is no `/register` endpoint, Claude either falls back to a broken state, or reports "Incompatible auth server: does not support dynamic client registration" and refuses to connect.
-
-There is a GitHub issue on the official `github/github-mcp-server` repo titled "Dynamic Client Registration not supported" where users hit exactly this on VS Code and Claude.
+The current code constructs the sketchpad path as `Path(cfg["DATA_DIR"]) / cfg["SKETCHPAD_FILENAME"]`. The v1.1 change adds a username segment: `Path(cfg["DATA_DIR"]) / username / cfg["SKETCHPAD_FILENAME"]`. If the username is taken directly from the OAuth token claims without sanitization, a malicious or compromised OAuth provider could return a username containing path traversal sequences like `../admin` or `../../etc`, allowing one user to read or overwrite another user's sketchpad -- or worse, write to arbitrary paths on the PVC.
 
 **Why it happens:**
 
-"GitHub as identity provider" sounds like GitHub is your authorization server. It isn't. GitHub is an upstream identity provider (it can tell you who the user is). The authorization server — the thing that issues tokens to Claude — needs to be your own code or a dedicated OAuth server (Authlib, Dex, Ory Hydra, etc.) that wraps GitHub for login but speaks DCR to Claude.
+Developers trust that "GitHub usernames are safe" because GitHub restricts them to `[a-zA-Z0-9-]`. This is true *today* for GitHub.com, but: (1) the server already supports Google as an OAuth provider via the `OAUTH_PROVIDER` env var, and Google display names can contain arbitrary Unicode; (2) a future provider switch could introduce unrestricted usernames; (3) defense-in-depth requires validating at the point of use, not at the identity source.
 
-**How to avoid:**
+**Consequences:**
 
-Treat GitHub OAuth as a login mechanism only (the user clicks "Sign in with GitHub" in the browser). Your Python server runs its own authorization server (using Authlib's `AuthorizationServer` or FastAPI with Authlib). That server exposes:
-- `/.well-known/oauth-authorization-server` (RFC 8414 metadata)
-- `/.well-known/oauth-protected-resource` (RFC 9728 metadata)
-- `/oauth/register` (DCR endpoint, RFC 7591)
-- `/oauth/authorize` (redirects to GitHub, returns auth code)
-- `/oauth/token` (exchanges code for access token)
+- User A reads/writes User B's sketchpad file
+- Arbitrary file write on the PVC (could corrupt OAuth state if data and state share a parent)
+- Silent data leak with no error or log
 
-The DCR endpoint returns a `client_id` to Claude. GitHub is only involved in the user-facing browser login step.
+**Prevention:**
 
-**Warning signs:**
+Validate the username at the point of path construction using Python's `pathlib.Path.resolve()` + `is_relative_to()`:
 
-- Claude reports "does not support dynamic client registration" in connection logs
-- Your authorization server metadata JSON has no `registration_endpoint` field
-- You are trying to use `https://github.com/login/oauth/authorize` directly as your `authorization_endpoint` in the metadata you serve to Claude
+```python
+from pathlib import Path
 
-**Phase to address:** OAuth Authorization Server implementation phase (early, before any Claude integration testing)
-
----
-
-### Pitfall 2: The `about:blank` Loop — Claude.ai Web Sometimes Fails Even With a Correct Server
-
-**What goes wrong:**
-
-Your server is fully spec-compliant. MCP Inspector connects fine. Claude Code CLI connects fine. But when you add the server in Claude.ai web, Claude opens a browser window to `about:blank` and nothing happens. The server logs show zero inbound requests — Claude never even contacted the server.
-
-This is a documented bug in Claude's OAuth proxy/client implementation (GitHub issue #11814 in `anthropics/claude-code`, marked as duplicate, not fixed as of early 2026).
-
-**Why it happens:**
-
-Claude.ai web uses an internal OAuth proxy that has different behavior from Claude Code CLI. The proxy has URL construction or validation logic that silently fails on certain server configurations without surfacing any error to the user.
-
-**How to avoid:**
-
-Build the server and test it with Claude Code CLI (`claude mcp add --transport http server-name https://yourserver.com`) first. Do not assume Claude.ai web will "just work" if CLI works — there may be additional compatibility requirements. When debugging, use: (1) MCP Inspector, (2) Claude Code CLI, (3) Claude.ai web, in that order. If CLI works but web fails, this is likely a Claude-side issue, not your server.
-
-**Warning signs:**
-
-- Claude.ai web shows a blank or empty browser popup
-- Server access logs show zero requests during connection attempt
-- MCP Inspector and Claude Code CLI both work correctly
-
-**Phase to address:** Integration testing phase — set explicit success criteria as "works in Claude Code CLI" before attempting Claude.ai web.
-
----
-
-### Pitfall 3: Wrong `WWW-Authenticate` Header Format Breaks Discovery
-
-**What goes wrong:**
-
-The MCP spec (2025-06-18) requires your MCP server to respond to unauthenticated requests with HTTP 401 and a specific `WWW-Authenticate` header format. The header must point to your Protected Resource Metadata URL (RFC 9728). If the format is wrong — wrong parameter name, missing quotes, wrong URL — the entire auth discovery chain breaks. Claude cannot find the authorization server and the flow never starts.
-
-**Why it happens:**
-
-There are two different things that look similar:
-- The old approach pointed directly at the authorization server metadata URL
-- The new 2025-06-18 spec requires pointing at the **resource server** metadata URL (RFC 9728), which then references the authorization server
-
-Many tutorials and examples still show the old format or mix them up.
-
-**How to avoid:**
-
-The correct format is exactly:
-```
-WWW-Authenticate: Bearer resource_metadata="https://your-server.com/.well-known/oauth-protected-resource"
+def get_user_sketchpad_path(data_dir: str, username: str, filename: str) -> Path:
+    base = Path(data_dir).resolve()
+    user_path = (base / username / filename).resolve()
+    if not user_path.is_relative_to(base):
+        raise ValueError(f"Invalid username for path construction: {username!r}")
+    return user_path
 ```
 
-The key: `resource_metadata` (not `realm`, not `as_uri`, not `authorization_server`). The value must point to YOUR server's `/.well-known/oauth-protected-resource` endpoint, not to GitHub or any external auth server.
+Additionally, apply an allowlist regex as the first line of defense:
 
-Your `/.well-known/oauth-protected-resource` response must then contain `"authorization_servers": ["https://your-server.com"]` pointing to your own auth layer.
-
-**Warning signs:**
-
-- OAuth flow never starts (no browser popup)
-- Curl of your MCP endpoint returns 401 but the header looks like `WWW-Authenticate: Bearer realm="mcp"` without `resource_metadata`
-- MCP Inspector reports it cannot find authorization server
-
-**Phase to address:** OAuth server implementation phase.
-
----
-
-### Pitfall 4: DCR `grant_types` Validation Bug in Python MCP Libraries
-
-**What goes wrong:**
-
-The Python MCP SDK's built-in DCR handler (as of mid-2025) rejects registration requests that include only `authorization_code` as the grant type. It requires BOTH `authorization_code` AND `refresh_token`, but RFC 7591 makes `refresh_token` optional. This causes HTTP 400 errors during Claude's registration attempt.
-
-Separately, the FastMCP library has a similar validation bug (GitHub issue #2460) that was reported but may or may not be fixed in current versions.
-
-**Why it happens:**
-
-Library implementers added stricter-than-spec validation. Claude sends `"grant_types": ["authorization_code"]` during DCR. The library rejects it.
-
-**How to avoid:**
-
-Before starting: check the current version of your chosen MCP library (Python SDK or FastMCP) against the issue tracker. Test DCR registration manually with curl before trying Claude:
-
-```bash
-curl -X POST https://your-server.com/oauth/register \
-  -H "Content-Type: application/json" \
-  -d '{"redirect_uris": ["https://claude.ai/api/mcp/auth_callback"], "grant_types": ["authorization_code"]}'
+```python
+import re
+SAFE_USERNAME = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$')
+if not SAFE_USERNAME.match(username):
+    raise ValueError(f"Username contains disallowed characters: {username!r}")
 ```
 
-If you get a 400, you hit the bug. If using the Python MCP SDK, consider using Authlib's DCR implementation directly instead of the built-in one — it is more RFC-compliant.
+**Detection:**
 
-**Warning signs:**
+- Unit test: attempt path traversal with usernames like `../other-user`, `../../etc/passwd`, `foo/../../bar`
+- Log the resolved path and compare against the expected base directory
 
-- DCR returns HTTP 400 with message like "grant_types must be authorization_code and refresh_token"
-- Claude reports registration failure but server is reachable
-
-**Phase to address:** OAuth server implementation phase — verify during initial DCR endpoint build.
+**Phase to address:** Per-user isolation implementation (first task -- validate before writing any file I/O code)
 
 ---
 
-### Pitfall 5: Python SDK RFC 9728 URL Path Bug With Non-Root MCP Paths
+### Pitfall 2: Extracting the Wrong Claim from the OAuth Token
 
 **What goes wrong:**
 
-When the MCP server is served at a path (e.g., `https://your-server.com/mcp` instead of `https://your-server.com`), the Python MCP SDK constructs the protected resource metadata URL incorrectly. It serves the metadata at `/.well-known/oauth-protected-resource` (root) but advertises `/.well-known/oauth-protected-resource/mcp` (with path), or vice versa. Claude cannot find the metadata.
+FastMCP's `GitHubProvider` populates the `AccessToken.claims` dict with GitHub user data. The available claims include `sub` (numeric GitHub user ID as string), `login` (GitHub username), `name` (display name), and `email`. Using the wrong claim key -- e.g., `token.claims.get("username")` instead of `token.claims.get("login")` -- returns `None`, and the code either crashes or falls through to a default, creating all users' files in the same directory.
 
 **Why it happens:**
 
-Open bug in the Python SDK (GitHub issue #1052, filed June 2025, not confirmed fixed as of this writing). The RFC 9728 path-aware URL construction was not implemented.
+- Standard OAuth/OIDC uses `sub` for the subject identifier, but GitHub's `sub` is a numeric ID (e.g., `"12345678"`), not a human-readable username
+- The claim key is `"login"`, not `"username"` or `"preferred_username"` (which are OIDC standard names)
+- Different providers use different claim keys: Google uses `"email"` or `"sub"`, GitHub uses `"login"`
 
-**How to avoid:**
+**Consequences:**
 
-Serve your MCP endpoint at the root path: `https://your-server.com/mcp` → avoid. Use `https://your-server.com` or configure `settings.auth.resource_server_url` to match exactly. Test by manually curling both `/.well-known/oauth-protected-resource` and `<path>/.well-known/oauth-protected-resource` to see which one actually returns JSON.
+- If using `sub`: directories are named `12345678/` instead of `hellothisisflo/` -- functional but unreadable for debugging, and breaks if the user changes their GitHub account ID (impossible) vs. username (possible but rare)
+- If using a wrong key like `"username"`: returns `None`, causing a `TypeError` when constructing the path or defaulting all users to the same folder
+- If using `"name"`: display names can be `None`, contain spaces, Unicode, etc.
 
-**Warning signs:**
+**Prevention:**
 
-- Curl of `/.well-known/oauth-protected-resource` returns 404 or wrong content
-- MCP Inspector or Claude cannot find authorization server metadata
+Use `"login"` for GitHub and extract it using FastMCP's `TokenClaim` dependency injection, which raises `RuntimeError` if the claim is missing (fail-fast):
 
-**Phase to address:** OAuth server implementation phase — verify discovery endpoints before testing Claude integration.
+```python
+from fastmcp.server.dependencies import TokenClaim
 
----
-
-### Pitfall 6: `redirect_uri` Mismatch — Claude's Callback URL vs What You Registered
-
-**What goes wrong:**
-
-Claude.ai uses `https://claude.ai/api/mcp/auth_callback` as its OAuth callback. But there is documentation that this may change to `https://claude.com/api/mcp/auth_callback`. If your authorization server validates redirect URIs exactly (which it must, for security), and Claude sends the one you did not register, the token exchange fails with `redirect_uri mismatch`.
-
-There is also a reported bug (GitHub issue #10439) where Claude Code CLI sends a malformed `redirect_uri` with an unencoded space.
-
-**Why it happens:**
-
-The MCP spec and Claude's implementation are both in active development. The callback URL has changed and may change again. The DCR endpoint receives Claude's redirect_uri at registration time, so it should be registered dynamically — but only if your DCR implementation stores and validates the registered URIs per-client.
-
-**How to avoid:**
-
-Your DCR endpoint must store the `redirect_uris` array from the registration request and use that stored value during the authorization code exchange validation — not a hardcoded list. If Claude registers `https://claude.ai/api/mcp/auth_callback`, that is what gets stored. Do not hardcode callback URLs in your authorization server.
-
-As a belt-and-suspenders measure, allowlist both `https://claude.ai/api/mcp/auth_callback` AND `https://claude.com/api/mcp/auth_callback` in any static configuration you have.
-
-**Warning signs:**
-
-- Token exchange returns error like `redirect_uri_mismatch` or `redirect_uri not registered for client`
-- Claude completes the browser login but never receives a token
-- Authorization server logs show the registered URI differs from the requested URI
-
-**Phase to address:** OAuth server implementation phase.
-
----
-
-### Pitfall 7: Talos OS Has No Default StorageClass — PVCs Pend Forever
-
-**What goes wrong:**
-
-You create a Kubernetes `PersistentVolumeClaim` manifest and apply it. The PVC stays in `Pending` state permanently. The pod that needs it never starts. Talos OS does not ship with any default StorageClass or storage provisioner — unlike managed K8s (GKE, EKS) or k3s, which include one.
-
-**Why it happens:**
-
-Beginners assume Kubernetes includes dynamic storage provisioning. It does not unless a CSI driver or provisioner is installed. On Talos, nothing is pre-installed.
-
-**How to avoid:**
-
-Install `local-path-provisioner` (Rancher's) before creating any PVCs. The Talos-specific setup requires:
-
-1. A user volume configured in the Talos machine config at `/var/mnt/local-path-provisioner` (not the default `/opt/local-path-provisioner`, which is read-only on Talos's immutable filesystem)
-2. A kustomization patch to set the provisioner's data path to match the mounted volume
-3. Optionally mark it as the default StorageClass
-
-Verify before creating the app PVC:
-```bash
-kubectl get storageclass
-kubectl get pvc -A
+@mcp.tool
+def read_file(username: str = TokenClaim("login")) -> str:
+    # username is automatically extracted from the JWT and validated as non-None
+    ...
 ```
 
-**Warning signs:**
+Verified in the installed FastMCP 3.1.0 source: `GitHubTokenVerifier.verify_token()` in `fastmcp/server/auth/providers/github.py` line 137 sets `claims={"login": user_data.get("login"), ...}`.
 
-- `kubectl describe pvc <name>` shows `Events: no events` or `FailedBinding`
-- `kubectl get pvc` shows `STATUS: Pending` indefinitely
-- `kubectl get storageclass` returns `No resources found`
+**Detection:**
 
-**Phase to address:** Kubernetes infrastructure setup phase (before deploying any app manifests).
+- Log `token.claims.keys()` during initial testing to see what's actually available
+- Unit test: mock an AccessToken with known claims and verify the correct key is used
+- Integration test: authenticate via GitHub and log the extracted username
+
+**Phase to address:** User identity extraction (before per-user path logic)
+
+---
+
+### Pitfall 3: Breaking Existing Single-User Functionality During Migration
+
+**What goes wrong:**
+
+The v1.0 tools work without any user context -- `read_file()` and `write_file(content, mode)` take no user parameter. Adding a `username` parameter changes the function signature. If the parameter is not injected via FastMCP's dependency injection (`TokenClaim`) but instead added as a regular parameter, Claude will see it in the tool schema and try to fill it in -- sending a hallucinated or user-chosen username, bypassing the OAuth identity entirely.
+
+**Why it happens:**
+
+FastMCP's `@mcp.tool` decorator exposes all function parameters as tool arguments to the LLM client. The `TokenClaim("login")` dependency is special -- FastMCP knows to inject it from the auth context and hide it from the tool schema. But if you write `def read_file(username: str)` without the `TokenClaim` default, FastMCP exposes `username` as a required argument that Claude must provide.
+
+**Consequences:**
+
+- **Security bypass:** Claude sends `username: "admin"` and reads another user's sketchpad
+- **Broken schema:** Existing Claude sessions that cached the old tool schema may fail with unexpected parameter errors
+- **Regression:** The tool works differently in v1.1 than v1.0, breaking the existing proven flow
+
+**Prevention:**
+
+Use FastMCP's dependency injection exclusively for user identity:
+
+```python
+@mcp.tool
+def read_file(username: str = TokenClaim("login")) -> str:
+    # `username` is injected by FastMCP from the OAuth token, NOT from Claude
+    # FastMCP hides DI parameters from the tool schema
+```
+
+Verify by checking the tool's JSON schema after registration -- `username` should NOT appear in the `inputSchema.properties`.
+
+**Detection:**
+
+- After implementing, call `mcp.list_tools()` or inspect the tool schema to confirm `username` is not listed as a parameter
+- Test with Claude: ask it to read the sketchpad -- it should not ask for or mention a username
+
+**Phase to address:** Tool refactoring (core implementation step)
+
+---
+
+### Pitfall 4: `lru_cache` on `get_config()` Prevents Per-User Dynamic Config
+
+**What goes wrong:**
+
+The current `config.py` uses `@lru_cache(maxsize=1)` on `get_config()`. This is correct for v1.0 where config is static. But if v1.1 tries to add any per-user or per-request configuration (e.g., per-user storage paths constructed in config), the cache returns the same config dict for every request. More subtly: if code modifies the returned dict (since dicts are mutable), the mutation persists in the cache and affects all subsequent callers.
+
+**Why it happens:**
+
+`lru_cache` returns the same object reference. The config dict is mutable. Any code that does `cfg["DATA_DIR"] = per_user_path` would corrupt the cached config for all users.
+
+**Consequences:**
+
+- All users see the same `DATA_DIR` (the one set by the first request)
+- Or: the first user's path leaks to subsequent users via the mutated cache
+- Difficult to debug because it depends on request ordering
+
+**Prevention:**
+
+Do NOT modify the cached config dict. Instead, compute per-user paths at the point of use:
+
+```python
+cfg = get_config()
+base_dir = Path(cfg["DATA_DIR"])
+user_dir = base_dir / username  # Compute per-user path from the static base
+```
+
+Never do `cfg["DATA_DIR"] = something_different`. The config should remain read-only and static. Per-user variation happens in the tool functions, not in config.
+
+**Detection:**
+
+- Code review: search for any mutation of the config dict
+- Test with two different users in sequence -- verify each gets their own directory
+
+**Phase to address:** Per-user isolation implementation (architecture decision -- keep config static, compute per-user paths in tools)
 
 ---
 
@@ -228,107 +183,218 @@ kubectl get pvc -A
 
 ---
 
-### Pitfall 8: Cloudflare Tunnel TLS Double-Encryption Confusion
+### Pitfall 5: Directory Auto-Creation Race Condition on First Write
 
 **What goes wrong:**
 
-Cloudflare Tunnel terminates TLS externally and forwards traffic to your K8s service internally. Beginners sometimes configure the internal service to also expect HTTPS, causing TLS handshake failures. Or they set Cloudflare SSL mode to "Flexible" (only encrypts client→Cloudflare, not Cloudflare→origin), which sends HTTP to your server while your server expects HTTPS tokens.
+The current code has `sketchpad_path.parent.mkdir(parents=True, exist_ok=True)` in `write_file()` but not in `read_file()`. When a new user's first action is to read (not write), there is no directory yet and the code tries to read from a nonexistent path. The v1.0 code handles this with a `WELCOME_MESSAGE` fallback, but this logic must survive the refactor. If the path construction changes but the `not sketchpad_path.exists()` check is missed, the server returns an error instead of the welcome message.
 
-**How to avoid:**
+**Why it happens:**
 
-Set Cloudflare SSL/TLS mode to "Full" (encrypts end-to-end). Configure the internal cloudflared service to point to the K8s service using `http://` (not `https://`) since traffic inside the cluster is on a private network. OAuth requires HTTPS — but that HTTPS is provided by Cloudflare to the outside world; inside your cluster, HTTP is fine for the tunnel-to-service leg.
+Refactoring the path construction is the focus; the edge case of "first read before first write" is easy to overlook.
 
-**Warning signs:**
+**Consequences:**
 
-- Browser sees SSL errors or mixed content warnings
-- OAuth redirect fails with "redirect URI must use HTTPS" errors even though the public URL uses HTTPS
-- Server receives double-encoded TLS or connection resets
+- New user's first `read_file()` call returns an error instead of the welcome message
+- Minor but breaks the clean first-use experience
 
-**Phase to address:** Cloudflare Tunnel + Kubernetes networking phase.
+**Prevention:**
+
+The `read_file()` function already handles the missing-file case. Ensure this logic is preserved during the refactor:
+
+```python
+if not sketchpad_path.exists():
+    return WELCOME_MESSAGE
+```
+
+Add a test case: new user, read before write, verify welcome message.
+
+**Detection:**
+
+- Test: authenticate as a new user, call `read_file()` immediately, assert `WELCOME_MESSAGE`
+
+**Phase to address:** Tool refactoring
 
 ---
 
-### Pitfall 9: Cloudflare Tunnel Parameter Order Crashes cloudflared Pod
+### Pitfall 6: NFS Permission Issues with Per-User Subdirectories
 
 **What goes wrong:**
 
-The `cloudflared` command in a Kubernetes deployment spec has strict parameter ordering. If parameters appear in the wrong order, `cloudflared` pods restart in a crash loop. The Cloudflare documentation explicitly warns about this but it is easy to miss.
+The PVC is backed by NFS via `nfs-subdir-external-provisioner` on a Synology NAS. When the Python process calls `mkdir(parents=True, exist_ok=True)` to create a per-user subdirectory, NFS may reject the operation if the NFS export's permission settings are too restrictive. The container process runs as a non-root user (or the NFS export uses `root_squash`), and the process cannot create subdirectories in the PVC mount.
 
-**How to avoid:**
+**Why it happens:**
 
-Follow the exact parameter order from the official Kubernetes deployment guide. The correct order is:
-```
-cloudflared tunnel --config /etc/cloudflared/config.yaml run
-```
-not
-```
-cloudflared tunnel run --config /etc/cloudflared/config.yaml
-```
+In v1.0, the single `sketchpad.md` file was written directly in the PVC root (`/data/sketchpad.md`). This worked because the provisioner created the directory with appropriate permissions. In v1.1, the process needs to create subdirectories (`/data/hellothisisflo/sketchpad.md`), which requires write permission on the PVC root -- which may not be available if NFS permissions are restrictive.
 
-Do not use `autoscaling` for cloudflared — it does not load-balance across replicas. Replicas are for high availability only.
+**Consequences:**
 
-**Warning signs:**
+- `PermissionError: [Errno 13] Permission denied: '/data/hellothisisflo'`
+- Affects only the first write for each new user (after that, the directory exists)
+- May work in local testing but fail in production on NFS
 
-- `kubectl get pods` shows cloudflared pods in `CrashLoopBackOff`
-- `kubectl logs` for the pod shows argument parsing errors
+**Prevention:**
 
-**Phase to address:** Cloudflare Tunnel deployment phase.
+- Verify the NFS export allows the container's UID/GID to create subdirectories
+- Set `securityContext.fsGroup` in the K8s deployment to match the NFS export's expected group
+- Test directory creation on the actual NFS mount, not just local filesystem
+- Consider adding a startup check that verifies write permissions on the data directory
+
+**Detection:**
+
+- Deploy v1.1, authenticate as a new user, attempt a write
+- Check container logs for `PermissionError`
+- Pre-flight check: `kubectl exec` into the pod and try `mkdir /data/test-dir`
+
+**Phase to address:** Kubernetes deployment update (verify before release)
 
 ---
 
-### Pitfall 10: Port 443 Requirement for Claude.ai Web
+### Pitfall 7: Makefile `$(shell ...)` Becomes Backtick Evaluation in Just
 
 **What goes wrong:**
 
-Claude Desktop and Claude.ai web only connect to MCP servers on standard HTTPS port 443. If your server is exposed on a custom port (e.g., 8443), Claude.ai web will refuse to connect. Claude Code CLI is more permissive.
+The current Makefile uses `$(shell git rev-parse --short HEAD)` for dynamic variables. Just uses backticks for command evaluation: `` SHA := `git rev-parse --short HEAD` ``. If the developer translates `$(shell ...)` to `{{...}}` (Just's interpolation syntax), the command is treated as a variable reference, not a shell command. The build tag becomes a literal string like `sha-` (empty) instead of `sha-abc1234`.
 
-**How to avoid:**
+**Why it happens:**
 
-Configure Cloudflare Tunnel to serve your MCP server on the standard public domain without a port suffix. Cloudflare handles the 443→internal routing. Your internal service can use any port; the public URL should not include a port number.
+Makefile and Justfile use different syntax for different operations:
+- Makefile: `$(shell cmd)` = execute command, `$(VAR)` = expand variable
+- Justfile: `` `cmd` `` = execute command, `{{var}}` = expand variable
 
-**Warning signs:**
+Muscle memory from Makefile leads to using `{{...}}` where backticks are needed.
 
-- Claude.ai web refuses to add the server URL
-- Works fine with Claude Code CLI (which accepts non-standard ports)
+**Consequences:**
 
-**Phase to address:** Cloudflare Tunnel configuration phase.
+- Docker image tagged as `sha-` (empty SHA) instead of `sha-abc1234`
+- Pushes to registry overwrite the wrong tag
+- Deploy command applies the wrong image
+
+**Prevention:**
+
+Direct translation of the existing Makefile:
+
+```just
+IMAGE  := "ghcr.io/hellothisisflo/sketchpad"
+SHA    := `git rev-parse --short HEAD`
+TAG    := "sha-" + SHA
+NS     := "sketchpad"
+
+build:
+    docker buildx build --platform linux/amd64 -t {{IMAGE}}:{{TAG}} -t {{IMAGE}}:latest --load .
+```
+
+Note: strings in Just variable assignments need quotes. The backtick expression for `SHA` does not.
+
+**Detection:**
+
+- After conversion, run `just --evaluate` to see all computed variable values
+- Verify `SHA` and `TAG` have correct values before running `build`
+
+**Phase to address:** Makefile-to-Just migration
 
 ---
 
-### Pitfall 11: Kubernetes Secrets Are Not Encrypted — Base64 Is Not Security
+### Pitfall 8: Just Variable Syntax Requires Quotes for String Literals
 
 **What goes wrong:**
 
-You store your GitHub OAuth client secret, session keys, or other credentials in Kubernetes Secrets. But by default, K8s Secrets are stored as base64-encoded plaintext in etcd and are trivially decodable. Anyone with `kubectl` access can read them. On a home cluster this may be low risk, but it sets a bad habit and can create real exposure if the kubeconfig is compromised.
+In Makefile, `IMAGE := ghcr.io/hellothisisflo/sketchpad` works without quotes. In Just, unquoted values are parsed differently -- string literals must be quoted. Writing `IMAGE := ghcr.io/hellothisisflo/sketchpad` in a Justfile causes a parse error because `/` is not valid in a bare identifier.
 
-**How to avoid:**
+**Why it happens:**
 
-For this personal spike project, Kubernetes Secrets are acceptable, but understand what they are: base64 encoding, not encryption. Use `stringData:` fields in manifests so values do not need manual base64 encoding. Do not commit Secret manifests containing real credentials to git. If the cluster hosts other workloads, consider enabling encryption at rest in the kube-apiserver.
+Just has stricter parsing than Make. Make treats everything after `:=` as a string. Just requires explicit string delimiters.
 
-**Warning signs:**
+**Consequences:**
 
-- You have a `.yaml` file in your repo with `kind: Secret` and real credential values
+- Justfile fails to parse with a cryptic error
+- All recipes are unavailable
 
-**Phase to address:** Kubernetes secrets configuration phase.
+**Prevention:**
+
+Quote all string literal assignments:
+
+```just
+# Makefile (no quotes needed)
+IMAGE := ghcr.io/hellothisisflo/sketchpad
+
+# Justfile (quotes required)
+IMAGE := "ghcr.io/hellothisisflo/sketchpad"
+```
+
+**Detection:**
+
+- Run `just --list` immediately after conversion to verify the file parses
+- Run `just --evaluate` to verify all variable values
+
+**Phase to address:** Makefile-to-Just migration
 
 ---
 
-### Pitfall 12: SSE Transport Deprecated — Use Streamable HTTP
+### Pitfall 9: Just Recipes Run Each Line in a Separate Shell
 
 **What goes wrong:**
 
-The old MCP HTTP transport (HTTP + SSE, from spec 2024-11-05) is deprecated. The current spec (2025-06-18) uses Streamable HTTP. If you build on the old transport, you may work with some clients (old Claude Desktop versions) but fail with newer ones, or need to maintain both endpoints.
+By default, Just runs each line of a recipe in a separate shell invocation. This means `cd` in one line has no effect on the next line, and shell variables set in one line are not available in the next. This differs from Make, which also runs each line separately but where developers typically work around it with `&&` chains or backslash continuations.
 
-**How to avoid:**
+The Makefile's `deploy` recipe uses two sequential commands (`kubectl apply` then `kubectl rollout status`). In Just, these work fine as independent commands because they don't share state. But if future recipes need `cd` or shell variable state across lines, this will bite.
 
-Use the Streamable HTTP transport from the start. In the Python MCP SDK, this means using `mcp.server.fastmcp.FastMCP` with `transport="streamable-http"` (or the equivalent in the current SDK API). Check the Python SDK changelog for the exact parameter names as they changed between SDK versions.
+**Why it happens:**
 
-**Warning signs:**
+Just's design choice: each line is an independent shell invocation for reproducibility. Make does the same thing, so this is not actually a new behavior -- but developers who were using Make incorrectly (relying on implicit state sharing) will be surprised.
 
-- Examples or tutorials showing `/sse` endpoint for the MCP connection URL
-- Server using `StreamingResponse` with `text/event-stream` as the primary transport
+**Consequences:**
 
-**Phase to address:** MCP server implementation phase.
+- For the current Makefile: no impact -- all recipes use independent commands
+- For future recipes that need state across lines: unexpected behavior
+
+**Prevention:**
+
+For recipes needing shared state, use `set shell` or multi-line `&&` chains, or prefix the recipe with `#!/usr/bin/env bash` to run as a script.
+
+The current Makefile recipes are simple enough that a direct translation works without changes.
+
+**Detection:**
+
+- Run each recipe after conversion and verify identical behavior
+- Compare `just build` output to `make build` output
+
+**Phase to address:** Makefile-to-Just migration
+
+---
+
+### Pitfall 10: GitHub Username Rename Orphans User Data
+
+**What goes wrong:**
+
+Per-user directories are named by GitHub `login` (e.g., `/data/hellothisisflo/`). If a user renames their GitHub account, their next authentication produces a different `login` claim. The old directory remains but is no longer accessible -- the user gets a fresh empty sketchpad.
+
+**Why it happens:**
+
+GitHub allows username changes. The `login` field in the API response reflects the current username, not the original. The numeric `sub` (user ID) is stable across renames, but numeric IDs are not human-readable for debugging.
+
+**Consequences:**
+
+- User loses access to their existing sketchpad data
+- Old data is orphaned on disk (wasted space, potential confusion)
+- No error -- the user simply sees a fresh welcome message
+
+**Prevention:**
+
+The PROJECT.md already documents this as an accepted trade-off: "Username rename = new sketchpad (acceptable)." This is the right call for a spike/personal project.
+
+If this ever needs to be addressed:
+- Use `sub` (numeric ID) for the directory name
+- Store a `sub` -> `login` mapping file for human-readable display
+- Or detect the orphan by checking for directories on disk that don't match any current user
+
+For v1.1: accept the trade-off. Document it explicitly.
+
+**Detection:**
+
+- N/A for v1.1 (accepted behavior)
+
+**Phase to address:** Out of scope for v1.1 (documented trade-off)
 
 ---
 
@@ -336,68 +402,100 @@ Use the Streamable HTTP transport from the start. In the Python MCP SDK, this me
 
 ---
 
-### Pitfall 13: MCP Inspector "Works" Does Not Mean Claude "Works"
+### Pitfall 11: Just Not Installed on CI or Team Members' Machines
 
 **What goes wrong:**
 
-MCP Inspector is a useful debugging tool but has different OAuth behavior than Claude. Inspector successfully completes OAuth flows that Claude rejects, or manages credentials differently. "Works in Inspector" is a necessary but not sufficient condition for "works in Claude."
+The project has GitHub Actions CI that currently does not use the Makefile (CI uses its own workflow). But if any contributor or automated process tries to run `just build` without `just` installed, they get `command not found`. Unlike `make`, which is pre-installed on most Unix systems, `just` requires explicit installation.
 
-**How to avoid:**
+**Why it happens:**
 
-Test in this order: curl (raw endpoint verification) → MCP Inspector (basic OAuth flow) → Claude Code CLI → Claude.ai web. Each client tests a different layer. Do not declare the OAuth flow "done" until it works in Claude Code CLI at minimum.
+`just` is not a standard Unix tool. It must be installed via `cargo install just`, `brew install just`, or a package manager.
 
-**Phase to address:** Integration testing phase.
+**Consequences:**
+
+- New contributors cannot run build commands without installing just
+- CI pipelines break if they reference just commands without the install step
+
+**Prevention:**
+
+- Add a `just` installation step to CI if needed (or keep CI independent of the task runner)
+- Document the install in the project README or contributing guide
+- Consider keeping `Makefile` as a thin wrapper that delegates to `just` during transition (not recommended for this project -- clean cut is better)
+
+**Detection:**
+
+- Try running `just --list` on a fresh machine or in CI
+
+**Phase to address:** Makefile-to-Just migration (documentation step)
 
 ---
 
-### Pitfall 14: Talos OS Debugging — No SSH, No Shell
+### Pitfall 12: Removing `.PHONY` But Forgetting to Remove Makefile
 
 **What goes wrong:**
 
-On a traditional Linux K8s node, you SSH into the node to inspect logs, check processes, or debug networking. On Talos OS, there is no SSH, no shell, and no package manager. Beginners waste time trying to SSH in or `kubectl exec` into system pods.
+After creating the Justfile, the old Makefile is left in the repo. Developers (or CI, or muscle memory) run `make build` instead of `just build`. Both work, but the Makefile stops getting updated while the Justfile evolves. Eventually they diverge, and someone runs the stale Makefile thinking it's current.
 
-**How to avoid:**
+**Why it happens:**
 
-Use `talosctl` for node-level operations: `talosctl logs`, `talosctl dmesg`, `talosctl service`. Use `kubectl logs` for pod logs. Use `kubectl describe pod` for event-level diagnosis. For network debugging within the cluster, deploy a temporary `netshoot` debug pod with `kubectl run -it --rm debug --image=nicolaka/netshoot`.
+Gradual migration -- "I'll delete it later."
 
-**Warning signs:**
+**Consequences:**
 
-- You are trying to SSH into nodes
-- You are getting "connection refused" when trying to connect to nodes on port 22
+- Confusion about which file is authoritative
+- Stale Makefile produces incorrect builds
 
-**Phase to address:** All Kubernetes phases — operational mindset to establish early.
+**Prevention:**
+
+Delete the Makefile in the same commit that adds the Justfile. Clean cut. If you want a transition period, rename it to `Makefile.old` or add a deprecation message at the top.
+
+**Detection:**
+
+- Git: verify Makefile is removed in the migration commit
+
+**Phase to address:** Makefile-to-Just migration (same commit as Justfile creation)
 
 ---
 
-### Pitfall 15: OAuth Token Not Validated for Audience on the MCP Server
+### Pitfall 13: `$` in Justfile Recipes Needs Escaping (for Environment Variables)
 
 **What goes wrong:**
 
-The MCP server accepts any valid JWT from your authorization server without checking the `aud` (audience) claim. A token issued for a different service (e.g., for a future Obsidian vault server) would be accepted. This creates a security boundary failure.
+In Makefile recipes, you use `$$VAR` to reference shell environment variables (because `$VAR` is interpreted by Make). In Justfile recipes, `$VAR` is passed directly to the shell -- no doubling needed. If a developer converts the Makefile by removing the double-`$` (correct) but also adds double-`$` where it was not needed (incorrect), the recipe breaks.
 
-**How to avoid:**
+**Why it happens:**
 
-Your token validation logic must check that the token's `aud` claim matches the canonical URI of this specific MCP server (e.g., `https://sketchpad.yourdomain.com`). The MCP spec mandates this. In Python with Authlib: verify the `aud` claim during JWT decoding. If using opaque tokens, store the intended audience at issuance and verify at validation time.
+Inconsistent mental model during conversion. Make's `$$` -> shell's `$` mapping does not apply in Just.
 
-**Warning signs:**
+**Consequences:**
 
-- Token validation only checks signature and expiry, not audience
-- The same token successfully authorizes requests to multiple different services
+- Shell commands that reference environment variables fail silently or expand incorrectly
 
-**Phase to address:** OAuth token validation implementation phase.
+**Prevention:**
+
+The current Makefile does NOT use `$$` anywhere (all variable references use Make's `$(VAR)` syntax). So this is not an issue for the existing recipes -- but good to know for future recipes that reference environment variables.
+
+**Detection:**
+
+- Review: search for `$$` in the Justfile (should not exist unless intentional)
+
+**Phase to address:** Makefile-to-Just migration (awareness only)
 
 ---
 
-## Technical Debt Patterns
+## Phase-Specific Warnings
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Hardcode `redirect_uri` allowlist instead of using DCR-stored URIs | Simpler code | Breaks when Claude's callback URL changes | Never — DCR must store per-client URIs |
-| Skip audience validation in token verification | Faster to implement | Token from one service works on another | Never for OAuth |
-| Use `hostPath` instead of PVC for persistence | No StorageClass needed | Data tied to a specific node; pod unschedulable if moved | Never in K8s |
-| Combine authorization server and resource server in one codebase | Fewer services to deploy | Harder to reason about, audit, and evolve | Acceptable for this spike |
-| Skip refresh token support | Simpler auth server | Users must re-authenticate when token expires (Claude re-auth is awkward) | Acceptable for initial MVP, add refresh tokens in v2 |
-| Use `kubectl port-forward` instead of Cloudflare Tunnel for initial testing | Faster to test locally | Not publicly accessible; can't test real Claude.ai integration | Acceptable for local OAuth server testing only |
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| User identity extraction | Wrong claim key (Pitfall 2) | Use `TokenClaim("login")`, verify with logged claims |
+| Per-user path construction | Path traversal (Pitfall 1) | `resolve()` + `is_relative_to()`, allowlist regex |
+| Tool refactoring | Username exposed in tool schema (Pitfall 3) | Use DI, verify schema output |
+| Tool refactoring | Welcome message regression (Pitfall 5) | Preserve `if not exists` check, add test |
+| Config architecture | Mutating cached config (Pitfall 4) | Keep config static, compute per-user paths in tools |
+| K8s deployment | NFS permission denied (Pitfall 6) | Test `mkdir` on NFS mount before release |
+| Makefile to Just | Variable syntax (Pitfalls 7, 8) | Use `just --evaluate` to verify |
+| Makefile to Just | Stale Makefile left behind (Pitfall 12) | Delete in same commit |
 
 ---
 
@@ -405,11 +503,13 @@ Your token validation logic must check that the token's `aud` claim matches the 
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| GitHub OAuth | Treating GitHub as the authorization server that speaks to Claude | GitHub handles only user login (browser redirect); your own auth server speaks DCR to Claude |
-| Claude.ai callback | Hardcoding only `claude.ai/api/mcp/auth_callback` | Register dynamically via DCR; also allowlist `claude.com/api/mcp/auth_callback` as fallback |
-| Cloudflare Tunnel | Pointing tunnel at `https://` internal service | Point at `http://` internal K8s service; Cloudflare provides external HTTPS |
-| Python MCP SDK | Using built-in auth helpers without verifying RFC compliance | Check GitHub issues for current DCR/RFC9728 bugs before writing auth code |
-| Talos local-path-provisioner | Using default path `/opt/local-path-provisioner` | Must use `/var/mnt/local-path-provisioner` on Talos's writable volume |
+| FastMCP `TokenClaim` | Using `token.claims["username"]` (key does not exist for GitHub) | Use `TokenClaim("login")` -- the key is `"login"` for GitHubProvider |
+| FastMCP DI | Adding `username` as a regular tool parameter | Use `= TokenClaim("login")` default to inject from auth context and hide from tool schema |
+| `pathlib` path safety | String-checking for `../` in usernames | Use `Path.resolve()` + `is_relative_to()` -- handles symlinks and encoded traversals |
+| NFS permissions | Assuming `mkdir` works because it worked locally | NFS exports have separate permission rules; test on actual mount |
+| Just variable assignment | Writing `VAR := value` without quotes | Justfile requires `VAR := "value"` for string literals |
+| Just command capture | Using `{{$(shell cmd)}}` like Makefile | Use backticks: `` VAR := `cmd` `` |
+| Config mutation | Writing `cfg["DATA_DIR"] = per_user` on cached dict | Never mutate the config dict; compute derived paths in calling code |
 
 ---
 
@@ -417,26 +517,26 @@ Your token validation logic must check that the token's `aud` claim matches the 
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Accepting tokens not issued for this resource (no audience validation) | Token from another service authenticates here | Validate `aud` claim on every request |
-| Open DCR endpoint with no rate limiting | Registration DoS; storage exhaustion | Acceptable for personal single-user server; add rate limiting if multi-user |
-| Logging full access tokens in server logs | Token theft from logs | Log only token prefixes/hashes for debugging; never full token values |
-| Committing Kubernetes Secret manifests with real credentials to git | Credential exposure | Use `.gitignore` for secret manifests; use `stringData` not `data` |
-| Storing GitHub OAuth app client secret in ConfigMap instead of Secret | Visible to all K8s users | Always use `kind: Secret` for credential values |
+| No path sanitization on username | Path traversal -> read/write any user's data | `resolve()` + `is_relative_to()` + allowlist regex |
+| Using `name` claim instead of `login` | Display names contain spaces, Unicode, None | Always use `login` for GitHub, validate format |
+| Exposing username as tool parameter | Claude sends arbitrary usernames, bypassing OAuth | Use FastMCP DI (`TokenClaim`), verify schema |
+| Trusting that `get_access_token()` always returns a token | Returns `None` in STDIO mode or when auth is misconfigured | Use `TokenClaim` (raises `RuntimeError` if None) or check explicitly |
+| Skipping path validation because "GitHub usernames are safe" | Works until you switch OAuth provider or GitHub changes rules | Always validate at point of use, defense-in-depth |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **DCR endpoint:** Returns correct JSON including `client_id`, `redirect_uris`, `grant_types` — verify with curl, not just "no error"
-- [ ] **RFC 9728 metadata:** `/.well-known/oauth-protected-resource` returns JSON with `authorization_servers` array — curl it manually
-- [ ] **RFC 8414 metadata:** `/.well-known/oauth-authorization-server` returns JSON with `registration_endpoint`, `code_challenge_methods_supported: ["S256"]`, `token_endpoint_auth_methods_supported: ["none"]` — curl it manually
-- [ ] **WWW-Authenticate header:** 401 response from MCP endpoint includes `Bearer resource_metadata="https://..."` — curl the `/mcp` endpoint without a token
-- [ ] **PVC is Bound:** `kubectl get pvc` shows `STATUS: Bound`, not `Pending` — check before deploying app
-- [ ] **StorageClass exists:** `kubectl get storageclass` shows at least one StorageClass — check before creating PVC
-- [ ] **PKCE `code_challenge_method`:** Authorization server only accepts `S256`, never `plain` — verify in auth server config
-- [ ] **Token audience binding:** Decoded JWT `aud` claim matches your server's canonical URI — check with `jwt.io` on a real issued token
-- [ ] **Cloudflare Tunnel is routing:** `curl https://your-public-domain.com` reaches your pod — verify before OAuth testing
-- [ ] **Port 443 only:** Server is accessible without a port number in the URL — required for Claude.ai web
+- [ ] **Tool schema:** `read_file` and `write_file` tool schemas do NOT list `username` as a parameter -- verify with `mcp.list_tools()` or schema inspection
+- [ ] **Correct claim key:** Log `token.claims` during first test to confirm `"login"` contains the expected username
+- [ ] **Path safety:** Unit test with `../other-user` as username -- must raise `ValueError`, not create the directory
+- [ ] **Welcome message:** New user's first `read_file()` returns the welcome message, not an error
+- [ ] **Directory creation:** First `write_file()` for a new user creates the user directory and file without errors
+- [ ] **User isolation:** Two users authenticated with different GitHub accounts get different sketchpads
+- [ ] **Justfile parses:** `just --list` succeeds and shows all recipes
+- [ ] **Justfile equivalence:** `just build`, `just push`, `just deploy` produce identical results to the old `make` commands
+- [ ] **Makefile removed:** Old Makefile is deleted or renamed
+- [ ] **NFS permissions:** `write_file()` succeeds on the NFS-backed PVC in production, not just local testing
 
 ---
 
@@ -444,53 +544,40 @@ Your token validation logic must check that the token's `aud` claim matches the 
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| GitHub-as-auth-server misconception | HIGH | Redesign auth layer; implement your own authorization server wrapping GitHub; retest all OAuth flows |
-| Wrong WWW-Authenticate format | LOW | Update 401 response header; no other changes needed |
-| DCR grant_types bug in SDK | LOW | Upgrade SDK or implement custom DCR handler; retest registration |
-| PVC stuck in Pending | MEDIUM | Install local-path-provisioner; delete and recreate PVC; restart pod |
-| Cloudflare Tunnel crash loop | LOW | Fix parameter ordering in cloudflared deployment manifest; redeploy |
-| about:blank Claude.ai web bug | LOW | Switch to Claude Code CLI for testing; flag as known issue; verify spec compliance with Inspector |
+| Path traversal vulnerability discovered in production | MEDIUM | Add `resolve()` + `is_relative_to()` check; audit existing directories for suspicious names |
+| Wrong claim key, all users share one directory | LOW | Fix claim key; existing single-directory data is only from one user anyway |
+| Username exposed in tool schema | LOW | Add `TokenClaim` default; Claude will stop sending username on next session |
+| NFS permission denied | LOW | Fix `securityContext.fsGroup` or NFS export permissions; redeploy |
+| Justfile syntax errors | LOW | Fix syntax; no production impact (task runner is local only) |
+| Config dict mutation | MEDIUM | Fix to compute paths in tools; restart server to clear LRU cache; verify no cross-user data corruption |
 
 ---
 
-## Pitfall-to-Phase Mapping
+## Technical Debt Patterns
 
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| GitHub doesn't support DCR | OAuth Authorization Server design | `curl POST /oauth/register` returns client_id |
-| about:blank Claude.ai web bug | Integration testing | Use Claude Code CLI as primary test client |
-| Wrong WWW-Authenticate format | MCP server + OAuth implementation | `curl /mcp` without token returns correct 401 header |
-| DCR grant_types validation bug | OAuth Authorization Server implementation | `curl POST /oauth/register` with `grant_types: ["authorization_code"]` succeeds |
-| Python SDK RFC 9728 path bug | MCP server implementation | `curl /.well-known/oauth-protected-resource` returns valid JSON |
-| redirect_uri mismatch | OAuth Authorization Server implementation | DCR stores received redirect_uris; token exchange validates them dynamically |
-| No default StorageClass on Talos | Kubernetes infrastructure setup | `kubectl get storageclass` before creating PVCs |
-| Cloudflare TLS confusion | Cloudflare Tunnel setup | Public URL works with HTTPS; internal routing uses HTTP |
-| Cloudflare parameter ordering | Cloudflare Tunnel deployment | cloudflared pod is Running, not CrashLoopBackOff |
-| Port 443 requirement | Cloudflare Tunnel configuration | Server URL has no port suffix |
-| Secrets are base64 not encrypted | Kubernetes secrets phase | No Secret manifests committed to git |
-| SSE transport deprecated | MCP server implementation | Server uses streamable-http transport |
-| Token not validated for audience | Token validation implementation | Decoded JWT aud matches server canonical URI |
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Use `login` (mutable) instead of `sub` (stable) for directories | Human-readable directory names, easy debugging | Username rename orphans data | Acceptable for personal spike (documented in PROJECT.md) |
+| Skip per-user disk quotas | No quota management code | One user could fill the PVC | Acceptable for personal server with 2-3 users |
+| No migration of v1.0 data | Clean v1.1 start, no migration code | v1.0 sketchpad data is abandoned | Acceptable (documented as "fresh start" in PROJECT.md) |
+| No username->sub mapping file | Simpler implementation | Cannot trace orphaned directories | Acceptable for spike |
 
 ---
 
 ## Sources
 
-- [MCP Authorization Specification 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) — HIGH confidence (official spec)
-- [Evolving OAuth Client Registration in MCP](http://blog.modelcontextprotocol.io/posts/client_registration/) — HIGH confidence (official MCP blog)
-- [Claude Help Center: Building Custom Connectors via Remote MCP Servers](https://support.claude.com/en/articles/11503834-building-custom-connectors-via-remote-mcp-servers) — HIGH confidence (official Anthropic docs)
-- [Dynamic Client Registration not supported — github/github-mcp-server issue #1404](https://github.com/github/github-mcp-server/issues/1404) — HIGH confidence (official issue confirming GitHub does not support DCR)
-- [Claude OAuth requires DCR, making Azure AD/Entra ID complex — anthropics/claude-code issue #2527](https://github.com/anthropics/claude-code/issues/2527) — HIGH confidence (confirmed DCR requirement with recovery patterns)
-- [Claude Desktop and claude.ai fail with about:blank loop — anthropics/claude-code issue #11814](https://github.com/anthropics/claude-code/issues/11814) — HIGH confidence (active bug report with multiple reproductions)
-- [MCP OAuth using wrong redirect_uri — anthropics/claude-code issue #10439](https://github.com/anthropics/claude-code/issues/10439) — HIGH confidence (active bug report)
-- [FastMCP DCR grant_types validation bug — jlowin/fastmcp issue #2460](https://github.com/jlowin/fastmcp/issues/2460) — HIGH confidence (confirmed library bug)
-- [Python SDK RFC 9728 path bug — modelcontextprotocol/python-sdk issue #1052](https://github.com/modelcontextprotocol/python-sdk/issues/1052) — HIGH confidence (open SDK issue)
-- [OAuth works with Inspector but not Claude — PrefectHQ/fastmcp issue #972](https://github.com/PrefectHQ/fastmcp/issues/972) — MEDIUM confidence (community report with analysis)
-- [Talos Local Storage documentation](https://docs.siderolabs.com/kubernetes-guides/csi/local-storage) — HIGH confidence (official Talos docs)
-- [Cloudflare Tunnel Kubernetes deployment guide](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/deployment-guides/kubernetes/) — HIGH confidence (official Cloudflare docs)
-- [MCP auth implementation guide — Logto blog](https://blog.logto.io/mcp-auth-implementation-guide-2025-06-18) — MEDIUM confidence (verified against official spec)
-- [DCR in MCP: What it is, why it exists — WorkOS](https://workos.com/blog/dynamic-client-registration-dcr-mcp-oauth) — MEDIUM confidence (verified independently)
-- [MCP OAuth troubleshooting — Scalekit docs](https://docs.scalekit.com/authenticate/mcp/troubleshooting/) — MEDIUM confidence (vendor docs, independently plausible)
+- FastMCP GitHubProvider source: `fastmcp/server/auth/providers/github.py` lines 130-143 (installed package, HIGH confidence -- directly verified claim keys)
+- FastMCP `TokenClaim` dependency: `fastmcp/server/dependencies.py` lines 1370-1399 (installed package, HIGH confidence)
+- FastMCP `get_access_token()` function: `fastmcp/server/dependencies.py` lines 469-480 (installed package, HIGH confidence)
+- [FastMCP Authorization docs](https://gofastmcp.com/servers/authorization) -- HIGH confidence (official docs, verified against source)
+- [FastMCP JWT Claims issue #1398](https://github.com/jlowin/fastmcp/issues/1398) -- HIGH confidence (closed/resolved, confirmed claims are available)
+- [GitHub username regex](https://github.com/shinnn/github-username-regex) -- HIGH confidence (matches GitHub's documented rules: alphanumeric + hyphens, max 39 chars)
+- [Python pathlib `is_relative_to`](https://docs.python.org/3/library/pathlib.html) -- HIGH confidence (official Python docs, Python 3.9+)
+- [Preventing Directory Traversal in Python](https://salvatoresecurity.com/preventing-directory-traversal-vulnerabilities-in-python/) -- MEDIUM confidence (verified against pathlib docs)
+- [NFS permissions in Kubernetes](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/issues/158) -- MEDIUM confidence (community issue with verified workarounds)
+- [Just manual](https://just.systems/man/en/) -- HIGH confidence (official docs)
+- [Makefile to Justfile conversion issue #448](https://github.com/casey/just/issues/448) -- MEDIUM confidence (community experience)
 
 ---
-*Pitfalls research for: Remote MCP server with OAuth 2.1 (Python, Talos K8s, Cloudflare Tunnel)*
-*Researched: 2026-03-02*
+*Pitfalls research for: v1.1 Multi-User Isolation (per-user storage, user identity extraction, Makefile-to-Just migration)*
+*Researched: 2026-03-06*

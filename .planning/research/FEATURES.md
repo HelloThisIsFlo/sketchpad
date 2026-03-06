@@ -1,210 +1,212 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** Remote MCP server with OAuth 2.1 — single-file read/write, Claude AI Integration
-**Researched:** 2026-03-02
-**Confidence:** HIGH (official MCP spec + Claude support docs verified)
+**Domain:** Per-user storage isolation and build tooling migration for existing MCP server
+**Researched:** 2026-03-06
+**Confidence:** HIGH (FastMCP official docs verified, GitHub API constraints confirmed, Just manual reviewed)
+
+**Scope note:** This research covers only v1.1 features. All v1.0 features (OAuth 2.1, MCP tools, K8s deployment) are already shipped and working.
 
 ---
 
-## Feature Landscape
+## Table Stakes
 
-### Table Stakes (Claude AI Won't Connect Without These)
+Features required for the milestone to be considered complete. Missing any = milestone fails.
 
-These are the non-negotiable features. Missing any one of them means Claude.ai cannot discover, authenticate, or use the server.
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| **User identity extraction from OAuth token** | Cannot isolate per-user without knowing who the user is. FastMCP exposes `get_access_token()` with `token.claims.get("login")` for GitHub username | LOW | Existing OAuth flow (v1.0) |
+| **Per-user directory creation** | Each user needs their own storage folder. `DATA_DIR/<username>/sketchpad.md` is the natural path | LOW | User identity extraction |
+| **Scoped read_file to authenticated user** | `read_file` must only read the calling user's file, not a shared file | LOW | Per-user directory structure |
+| **Scoped write_file to authenticated user** | `write_file` must only write to the calling user's file, not a shared file | LOW | Per-user directory structure |
+| **Path traversal prevention** | A username-derived path must be validated against directory escape. Even though GitHub usernames are safe (alphanumeric + hyphen only, 1-39 chars), defense in depth requires `Path.resolve()` validation against the base directory | LOW | Per-user directory structure |
+| **Justfile replacing Makefile** | PROJECT.md lists Makefile-to-Just migration as a v1.1 requirement | LOW | Just installed on dev machine |
 
-| Feature | Why Required | Complexity | Notes |
-|---------|-------------|------------|-------|
-| **HTTPS transport** | All OAuth endpoints MUST be served over HTTPS per OAuth 2.1 | LOW | Provided by Cloudflare Tunnel; server itself can speak HTTP internally |
-| **Streamable HTTP MCP endpoint** (POST + GET on single URL) | Claude.ai uses Streamable HTTP transport (2025-03-26+). SSE-only is deprecated | MEDIUM | Single URL e.g. `/mcp` handles both POST (send) and GET (SSE stream). Return 405 on GET if not supporting server-push |
-| **MCP initialize/initialized handshake** | First interaction MUST be `initialize` request; server MUST respond with capabilities; client sends `initialized` notification | LOW | Declare `tools` capability in initialize response. Protocol version negotiation required |
-| **tools/list handler** | Claude discovers tools by calling `tools/list`. Without it there are no tools | LOW | Return array of tool definitions with `name`, `description`, `inputSchema` |
-| **tools/call handler** | Claude invokes tools by calling `tools/call`. This is the actual work | LOW | Dispatch by `name`, return `content` array with `type: "text"` items |
-| **`read_file` tool** | Core requirement from PROJECT.md | LOW | Returns contents of the single persistent file |
-| **`write_file` tool** | Core requirement from PROJECT.md | LOW | Replaces contents of the single persistent file |
-| **HTTP 401 on unauthenticated requests** | Claude initiates OAuth flow when it gets 401. Server MUST return 401 when token is absent or invalid | LOW | All MCP endpoints (POST /mcp) return 401 without valid Bearer token |
-| **`/.well-known/oauth-authorization-server`** (RFC 8414) | Claude MUST follow RFC 8414 metadata discovery. Server SHOULD implement it; fallback to default paths if absent but discovery is strongly recommended | MEDIUM | JSON document listing `authorization_endpoint`, `token_endpoint`, `registration_endpoint`, `code_challenge_methods_supported: ["S256"]` |
-| **`/authorize` endpoint** | Authorization code flow — redirects user to GitHub (or renders consent page). Required for the OAuth dance | HIGH | This is the hard part: must redirect to GitHub, handle callback, issue own auth code. See third-party flow below |
-| **`/token` endpoint** | Exchanges authorization code for access token. Must verify PKCE (`code_verifier` vs stored `code_challenge`) | HIGH | Public client (no secret). Must validate `code_verifier` using SHA256. Return `access_token`, `token_type: "bearer"`, `expires_in` |
-| **`/register` endpoint** (RFC 7591 DCR) | Claude.ai registers itself dynamically — it has no pre-configured client_id for private servers. Without DCR, Claude cannot obtain a client_id automatically | MEDIUM | Accept `client_name`, `redirect_uris`, `grant_types`, `token_endpoint_auth_method: "none"`. Return `client_id` |
-| **PKCE enforcement (S256)** | OAuth 2.1 REQUIRES PKCE for all public clients. Claude sends `code_challenge` and `code_verifier`. Server MUST validate | MEDIUM | Store `code_challenge` at /authorize time. Verify `SHA256(code_verifier) == code_challenge` at /token time |
-| **Bearer token validation on MCP endpoint** | Server MUST validate the Bearer token on every request and return 401/403 if invalid | MEDIUM | Token can be opaque (random string stored in memory/DB) or JWT. Opaque is simpler for a spike |
-| **Token expiry** | Tokens MUST expire. Short-lived tokens required by spec | LOW | Expiry can be generous (e.g. 1 hour) for spike. Store expiry alongside token |
+### Implementation Details
 
-### Differentiators (Useful But Not Needed for the Spike)
+#### User Identity Extraction
 
-These make the server more robust or correct per the latest spec, but the spike works without them.
+FastMCP's `get_access_token()` is the API. Available via `from fastmcp.server.dependencies import get_access_token`. The GitHubProvider stores the full GitHub `/user` API response in `token.claims`.
+
+Key claims from GitHub:
+- `login` -- the GitHub username (use this for directory names)
+- `name` -- display name (may be null)
+- `email` -- email (may be null if user hides it)
+- `id` -- numeric GitHub user ID (stable across renames)
+
+**Recommendation:** Use `login` for directory names. It is human-readable and filesystem-safe by GitHub's own constraints (alphanumeric + single hyphens, no leading/trailing hyphens, max 39 chars). The PROJECT.md already decided this and notes "Username rename = new sketchpad (acceptable)."
+
+**Confidence:** HIGH -- verified via FastMCP official docs at gofastmcp.com/integrations/github and gofastmcp.com/servers/authorization.
+
+#### Per-User Directory Layout
+
+Current (v1.0):
+```
+DATA_DIR/
+  sketchpad.md          # single shared file
+```
+
+Target (v1.1):
+```
+DATA_DIR/
+  hellothisisflo/
+    sketchpad.md        # Flo's sketchpad
+  another-user/
+    sketchpad.md        # another user's sketchpad
+```
+
+The tools create the user directory on first write via `mkdir(parents=True, exist_ok=True)` -- already used in v1.0 for the data dir itself.
+
+#### Path Traversal Defense
+
+Even though GitHub usernames cannot contain `/`, `..`, or other traversal characters, the server should validate the resolved path:
+
+```python
+user_dir = (Path(data_dir) / username).resolve()
+base_dir = Path(data_dir).resolve()
+if not str(user_dir).startswith(str(base_dir)):
+    raise ValueError("Path traversal detected")
+```
+
+This is defense-in-depth. If the identity provider ever changes (PROJECT.md already supports Google), the username format may differ.
+
+**Confidence:** HIGH -- standard Python security pattern, documented by OpenStack and PortSwigger.
+
+#### Justfile Migration
+
+The current Makefile has 6 targets: `build`, `push`, `deploy`, `restart`, `all`, `status`. Direct translation to Just:
+
+| Makefile Pattern | Justfile Equivalent |
+|------------------|---------------------|
+| `VAR := $(shell cmd)` | `` VAR := `cmd` `` (backtick evaluation) |
+| `.PHONY: target` | Not needed (Just is a command runner, not a build system) |
+| `target: dep1 dep2` | `target: dep1 dep2` (same syntax) |
+| `$(VAR)` in recipe | `{{VAR}}` in recipe |
+| Tabs required | Spaces or tabs accepted |
+
+Just advantages over Make for this project:
+- `just --list` shows all recipes with descriptions (no grepping)
+- No `.PHONY` boilerplate
+- Cleaner variable syntax
+- Recipe parameters (useful for future `deploy TAG` patterns)
+- Same syntax across macOS and Linux
+
+**Confidence:** HIGH -- verified via Just manual at just.systems/man/en/ and cheat sheet.
+
+---
+
+## Differentiators
+
+Features that add value beyond the core requirements. Not required for the milestone but worth considering.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **`/.well-known/oauth-protected-resource`** (RFC 9728) | Required in draft spec (not 2025-03-26). Claude.ai supports both. Cleaner discovery path; avoids fallback behavior | MEDIUM | JSON with `resource`, `authorization_servers`, `bearer_methods_supported`. Becomes REQUIRED when Claude moves to draft spec |
-| **Refresh tokens** | Allows Claude to silently refresh without re-authenticating. Better UX for long sessions | MEDIUM | Issue alongside access token. Add `/token` grant_type=refresh_token handling |
-| **Scope enforcement** | Restrict tools to specific scopes (e.g. `files:read`, `files:write`). Least-privilege principle | LOW | Declare scopes in metadata. Check scope claim on token during tool dispatch |
-| **Session management** (`Mcp-Session-Id` header) | Enables stateful MCP sessions. Server can track session state | MEDIUM | Include `Mcp-Session-Id` in initialize response. Reject requests without it with 400 |
-| **`notifications/tools/list_changed`** | Notify Claude when tool list changes. Declared via `listChanged: true` in capabilities | LOW | Not needed for static 2-tool server |
-| **Origin header validation** | Prevents DNS rebinding attacks. MUST per Streamable HTTP spec | LOW | Check `Origin` header on all incoming connections |
-| **Persistent token store (DB)** | Tokens survive server restarts. Eliminates re-auth after pod restart | MEDIUM | For spike, in-memory is acceptable if tokens are short-lived |
+| **Numeric ID fallback for directory naming** | GitHub's numeric `id` is stable across username renames. Could use `id` as the actual directory name with a `login` symlink or metadata file | MEDIUM | Adds complexity for a rare edge case. PROJECT.md explicitly accepts "rename = new sketchpad." Skip unless multiple users are expected |
+| **`whoami` tool** | A tool that returns the authenticated user's GitHub login, so Claude can confirm identity in conversations | LOW | Trivial to implement: `return token.claims.get("login")`. Useful for debugging and user confirmation |
+| **Storage quota per user** | Cap total file size per user to prevent PVC exhaustion | LOW | Already have `SIZE_LIMIT` config (50KB). Just enforce it at write time. More important with multiple users sharing a PVC |
+| **Justfile recipe for local dev** | `just dev` to run the server locally with hot reload | LOW | Useful for development workflow. `just dev` = `uv run fastmcp dev src/sketchpad/server.py` |
+| **Justfile recipe for running tests** | `just test` to run the test suite | LOW | `just test` = `uv run pytest` |
+| **Justfile `--list` descriptions** | Add comment annotations to recipes for `just --list` output | LOW | Just supports `# comment above recipe` for descriptions |
 
-### Anti-Features (Deliberately Do NOT Build These)
+---
+
+## Anti-Features
+
+Features to explicitly NOT build in v1.1. These are scope traps.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **JWT access tokens** | Adds crypto complexity (key generation, signing, verification). Spec does not require JWT — opaque tokens work fine | Use random UUID tokens stored in memory/simple dict with expiry time |
-| **Persistent OAuth state (DB)** | Database setup, migration, connection pool — all extra complexity for a spike | In-memory dicts for auth codes, tokens, and client registrations. Accepted tradeoff: re-auth after restart |
-| **Multi-user support / user isolation** | PROJECT.md explicitly out of scope. Complicates token-to-user mapping | Single-owner design: any successfully authenticated request is "the user" |
-| **Consent UI** | HTML consent page adds frontend work. For personal use with GitHub IdP, auto-approve is fine | Auto-approve authorization for all valid GitHub users (or just hardcode allowed GitHub login) |
-| **Rate limiting** | Out of scope per PROJECT.md | Skip entirely |
-| **OpenID Connect / OIDC discovery** | Claude supports RFC 8414 metadata. OIDC is an alternative path, not required here | Use RFC 8414 only |
-| **`client_credentials` grant** | For machine-to-machine flows. This server is user-facing (human completes GitHub login) | Authorization code flow only |
-| **Resource subscriptions** | Claude.ai explicitly does not support resource subscriptions yet | Do not expose `resources` capability |
-| **Sampling / elicitations** | Claude.ai does not support these capabilities | Do not declare them in initialize response |
-| **`tools/list` pagination** | Two tools. Cursor-based pagination is unnecessary complexity | Return all tools in a single response, no `nextCursor` |
-| **SSE server-push (GET /mcp)** | Streamable HTTP GET is optional. Claude does not require server-initiated messages for tool use | Return 405 on GET /mcp, or implement minimal SSE that immediately closes |
+| **Cross-user file sharing** | PROJECT.md: "User collaboration/sharing -- each user's sketchpad is fully isolated" | Complete isolation. No mechanism to read another user's files |
+| **User management admin UI** | PROJECT.md: "No admin UI, users are self-service via OAuth" | Users self-provision by authenticating. Directory created on first write |
+| **File listing / multi-file support** | PROJECT.md: "Obsidian vault logic (search, listing, multiple files) -- that's the next project" | Single file per user, same as v1.0 but scoped |
+| **Migration of v1.0 shared file** | PROJECT.md: "Fresh start for v1.1. No migration of v1.0 single-user data" | Clean slate. Old `DATA_DIR/sketchpad.md` can be deleted or ignored |
+| **Database-backed user registry** | Overkill. Users exist implicitly by having a directory. No need to track users in a DB | Directory existence = user exists. `os.listdir(DATA_DIR)` = list of users |
+| **Per-user quotas with enforcement** | Unnecessary complexity for a personal server with a few users | The existing `SIZE_LIMIT` warning is sufficient. No hard enforcement needed |
+| **Role-based access control (RBAC)** | All authenticated users have equal access to their own sketchpad. No admin/viewer distinction needed | Flat permission model: authenticated = full access to own sketchpad |
+| **Consent screen per user** | PROJECT.md: "Consent UI / approval screen -- single-user personal server" -- still applies even with multi-user, since this is personal infra | Auto-approve. Any valid GitHub user who completes OAuth gets a sketchpad |
+| **CI/CD changes for Just** | GitHub Actions CI already works with `docker buildx`. Just is for local dev workflow only. The CI pipeline does not use Make either | Keep CI as-is. Justfile is local-only |
+| **Username allowlisting** | Tempting but unnecessary. The server is behind Cloudflare Tunnel on a personal domain. OAuth with GitHub is sufficient access control | If access restriction is ever needed, add it as a separate feature |
 
 ---
 
 ## Feature Dependencies
 
 ```
-GitHub OAuth App (client_id + secret)
-    └──required by──> /authorize endpoint (redirects to GitHub)
-                          └──required by──> /token endpoint (receives GitHub code, issues own token)
-                                                └──required by──> Bearer token validation
-                                                                      └──required by──> tools/list, tools/call
+OAuth token (existing v1.0)
+  └── get_access_token() in tool function
+        └── Extract username from token.claims["login"]
+              └── Construct per-user directory path: DATA_DIR/<username>/
+                    ├── read_file reads DATA_DIR/<username>/sketchpad.md
+                    └── write_file writes DATA_DIR/<username>/sketchpad.md
 
-/.well-known/oauth-authorization-server
-    └──enables──> Claude DCR discovery
-                      └──required by──> /register endpoint
-                                            └──enables──> Claude auto-registration
+Path traversal validation
+  └── Applied BEFORE any filesystem operation
+        └── Validates resolved path is within DATA_DIR
 
-MCP initialize handshake
-    └──required by──> tools/list
-                          └──required by──> tools/call
-                                                └──splits into──> read_file tool
-                                                                   write_file tool
-
-PersistentVolumeClaim (K8s)
-    └──required by──> read_file / write_file (data survives pod restarts)
-
-HTTPS (Cloudflare Tunnel)
-    └──required by──> all OAuth endpoints (OAuth 2.1 MUST use HTTPS)
-    └──required by──> MCP endpoint (Claude.ai only connects to HTTPS)
+Justfile (independent of above)
+  └── Translates existing Makefile targets 1:1
+        └── No functional change, only DX improvement
 ```
 
 ### Dependency Notes
 
-- **GitHub OAuth App required before /authorize**: The authorize endpoint redirects to `https://github.com/login/oauth/authorize`. A GitHub OAuth App (client_id + secret) must be created first. This is a prerequisite to any OAuth testing.
-- **DCR required before tool access**: Claude.ai will attempt DCR before the authorization flow. If `/register` is absent and no pre-configured client_id exists, Claude will fail to initiate auth.
-- **Token validation required on every MCP call**: The MCP endpoint must check the Bearer token on both `tools/list` and `tools/call`. These cannot be unauthenticated, or Claude can access tools without auth.
-- **PVC independent of auth**: File persistence (PVC) is an infrastructure dependency, not an auth dependency. But without it, write_file changes vanish on pod restart.
-- **RFC 9728 enhances RFC 8414**: The draft spec requires `/.well-known/oauth-protected-resource` pointing to the auth server. The 2025-03-26 spec (what Claude.ai currently uses) only requires RFC 8414. Implement RFC 8414 first; add RFC 9728 if Claude fails discovery.
+- **User identity is the keystone.** Everything depends on extracting the username from the OAuth token. If `get_access_token()` does not return the GitHub `login` claim, nothing else works. This is verified to work in FastMCP with GitHubProvider.
+- **Directory creation is implicit.** No setup step needed. `mkdir(parents=True, exist_ok=True)` on first write creates the user's directory.
+- **Just migration is independent.** It has zero interaction with the per-user isolation work. Can be done in parallel or in any order.
+- **PVC is shared.** Both user directories live on the same PersistentVolumeClaim (`sketchpad-data`). No K8s changes needed -- the PVC already mounts at `DATA_DIR`.
 
 ---
 
-## MVP Definition
+## MVP Recommendation
 
-### Launch With (v1 — the spike)
+### Must Ship (v1.1 milestone requirements)
 
-The minimum needed to prove the full chain works:
+1. **User identity extraction** -- `get_access_token()` + `token.claims.get("login")` in tool functions
+2. **Per-user directory scoping** -- `DATA_DIR/<username>/sketchpad.md` path construction
+3. **Path traversal guard** -- `resolve()` + prefix check before any filesystem access
+4. **Justfile** -- 1:1 translation of existing Makefile targets
 
-- [ ] **HTTPS endpoint via Cloudflare Tunnel** — without HTTPS, OAuth is blocked entirely
-- [ ] **`/.well-known/oauth-authorization-server`** — Claude discovers auth endpoints from here; fallback exists but discovery is expected
-- [ ] **`/register` (DCR)** — Claude auto-registers; without it Claude cannot get a client_id
-- [ ] **`/authorize`** — initiates GitHub OAuth, stores code_challenge, redirects user to GitHub
-- [ ] **`/token`** — exchanges code for token after PKCE verification, returns opaque access token
-- [ ] **MCP endpoint POST `/mcp`** — handles initialize, initialized, tools/list, tools/call with Bearer auth
-- [ ] **`read_file` tool** — reads from a single PVC-backed file path
-- [ ] **`write_file` tool** — writes to the same file path
+### Should Ship (low effort, high value)
 
-### Add After Validation (v1.x)
+5. **`whoami` tool** -- 5 lines of code, useful for debugging multi-user
+6. **`just dev` and `just test` recipes** -- improve developer workflow
 
-Once the auth chain is proven to work:
+### Defer
 
-- [ ] **RFC 9728 `/.well-known/oauth-protected-resource`** — add when moving toward spec compliance or if draft spec is adopted by Claude.ai
-- [ ] **Refresh tokens** — add once access tokens expire during testing and re-auth becomes annoying
-- [ ] **Persistent token store** — add if re-auth on pod restart becomes a problem in daily use
-- [ ] **Scope enforcement** — add when expanding to multi-tool servers (Obsidian vault)
-
-### Future Consideration (v2+ — Obsidian vault server)
-
-- [ ] **Multiple file tools** (list_files, search_files, read_file, write_file, create_file, delete_file) — replace sketchpad tools entirely
-- [ ] **Scope-based access control** — `vault:read` vs `vault:write`
-- [ ] **Session management** — stateful sessions for long vault interactions
-- [ ] **Token refresh** — essential for long-running vault sessions
+- **Numeric ID-based directories** -- only matters if username renames become a problem
+- **Storage quotas** -- only matters if PVC usage becomes a concern
+- **Username allowlisting** -- only matters if unwanted users become a problem
 
 ---
 
-## Feature Prioritization Matrix
+## Complexity Assessment
 
-| Feature | Spike Value | Implementation Cost | Priority |
-|---------|-------------|---------------------|----------|
-| HTTPS (Cloudflare Tunnel) | HIGH | LOW (infra exists) | P1 |
-| `/.well-known/oauth-authorization-server` | HIGH | LOW | P1 |
-| `/register` (DCR) | HIGH | LOW | P1 |
-| `/authorize` with GitHub redirect | HIGH | HIGH | P1 |
-| `/token` with PKCE verification | HIGH | HIGH | P1 |
-| MCP endpoint (initialize + tools) | HIGH | MEDIUM | P1 |
-| `read_file` + `write_file` tools | HIGH | LOW | P1 |
-| Bearer token validation | HIGH | LOW | P1 |
-| PVC for file persistence | HIGH | LOW | P1 |
-| RFC 9728 protected resource metadata | MEDIUM | LOW | P2 |
-| Refresh tokens | MEDIUM | MEDIUM | P2 |
-| Persistent token store | LOW | MEDIUM | P3 |
-| Scope enforcement | LOW | LOW | P3 |
-| Origin header validation | MEDIUM | LOW | P2 |
+| Feature | Lines of Code (est.) | Risk | Notes |
+|---------|---------------------|------|-------|
+| User identity extraction | ~5 | LOW | Well-documented FastMCP API |
+| Per-user directory scoping | ~10 | LOW | Change path construction in `read_file` and `write_file` |
+| Path traversal guard | ~5 | LOW | Standard `Path.resolve()` pattern |
+| Justfile | ~30 | LOW | Direct syntax translation from existing Makefile |
+| `whoami` tool | ~5 | LOW | New tool, trivial implementation |
 
-**Priority key:**
-- P1: Must have — spike cannot succeed without it
-- P2: Should have — adds robustness/compliance, easy to add
-- P3: Nice to have — defer until Obsidian vault server
-
----
-
-## The Third-Party Auth Flow (Critical Architecture Detail)
-
-This deserves special attention because it is the most complex part and the core risk of the project.
-
-Claude.ai acts as a **public OAuth 2.1 client** (no secret, uses PKCE). The server acts as **both** an OAuth resource server (validates tokens for MCP calls) **and** an OAuth authorization server (issues tokens to Claude). The server itself delegates identity to GitHub.
-
-**Full flow:**
-
-```
-1. Claude → POST /mcp (no token) → Server returns 401
-2. Claude → GET /.well-known/oauth-authorization-server → Server returns RFC 8414 metadata
-3. Claude → POST /register → Server returns client_id (DCR)
-4. Claude → opens browser → GET /authorize?client_id=...&code_challenge=...&redirect_uri=https://claude.ai/api/mcp/auth_callback
-5. Server → stores {code_challenge, client_id, state} → redirects browser to GitHub OAuth
-6. GitHub → user logs in → redirects to Server callback (/github/callback?code=...)
-7. Server → exchanges GitHub code for GitHub access token (server-to-server call to GitHub)
-8. Server → verifies GitHub user is allowed → generates auth_code → redirects browser to Claude callback
-   (https://claude.ai/api/mcp/auth_callback?code=auth_code&state=...)
-9. Claude → POST /token?code=auth_code&code_verifier=... → Server verifies PKCE → returns access_token
-10. Claude → POST /mcp + Authorization: Bearer access_token → Server validates → returns MCP response
-```
-
-**The server must implement two OAuth legs:**
-- Leg 1 (server as OAuth client to GitHub): Redirect to GitHub, handle GitHub callback, store GitHub access token
-- Leg 2 (server as OAuth server to Claude): Issue auth codes, verify PKCE, issue access tokens
-
-This is the complexity. Everything else (the tools themselves) is trivial by comparison.
+**Total estimated change:** ~55 lines of code. This is a small, well-scoped milestone.
 
 ---
 
 ## Sources
 
-- MCP Authorization Spec (2025-03-26): https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization — HIGH confidence
-- MCP Authorization Spec (draft): https://modelcontextprotocol.io/specification/draft/basic/authorization — HIGH confidence
-- MCP Transports Spec (2025-06-18): https://modelcontextprotocol.io/specification/2025-06-18/basic/transports — HIGH confidence
-- MCP Lifecycle Spec (2025-03-26): https://modelcontextprotocol.io/specification/2025-03-26/basic/lifecycle — HIGH confidence
-- MCP Tools Spec (2025-03-26): https://modelcontextprotocol.io/specification/2025-03-26/server/tools — HIGH confidence
-- Claude Support: Building custom connectors via remote MCP servers: https://support.claude.com/en/articles/11503834-building-custom-connectors-via-remote-mcp-servers — HIGH confidence
-- MCP Connect Remote Servers: https://modelcontextprotocol.io/docs/develop/connect-remote-servers — HIGH confidence
-- Upstash MCP OAuth implementation guide: https://upstash.com/blog/mcp-oauth-implementation — MEDIUM confidence
-- WorkOS MCP Auth developer guide: https://workos.com/blog/mcp-auth-developer-guide — MEDIUM confidence
-- RFC 8414 (Authorization Server Metadata): https://datatracker.ietf.org/doc/html/rfc8414
-- RFC 7591 (Dynamic Client Registration): https://datatracker.ietf.org/doc/html/rfc7591
-- RFC 9728 (Protected Resource Metadata): https://datatracker.ietf.org/doc/html/rfc9728
-- OAuth 2.1 Draft: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-12
+- FastMCP Authorization docs: https://gofastmcp.com/servers/authorization -- HIGH confidence
+- FastMCP GitHub Integration: https://gofastmcp.com/integrations/github -- HIGH confidence
+- FastMCP get_access_token() API: https://gofastmcp.com/servers/authorization -- HIGH confidence
+- FastMCP JWT claims issue (resolved): https://github.com/jlowin/fastmcp/issues/1398 -- HIGH confidence
+- GitHub username constraints: https://github.com/shinnn/github-username-regex -- HIGH confidence
+- GitHub REST API /user fields: https://docs.github.com/en/rest/users -- HIGH confidence
+- Just task runner manual: https://just.systems/man/en/ -- HIGH confidence
+- Just vs Make comparison: https://spin.atomicobject.com/just-task-runner/ -- MEDIUM confidence
+- Justfile cheat sheet: https://cheatography.com/linux-china/cheat-sheets/justfile/ -- MEDIUM confidence
+- Path traversal prevention (Python): https://salvatoresecurity.com/preventing-directory-traversal-vulnerabilities-in-python/ -- HIGH confidence
+- OpenStack path security guide: https://security.openstack.org/guidelines/dg_using-file-paths.html -- HIGH confidence
+- MCP multi-tenant patterns: https://bix-tech.com/multi-user-ai-agents-with-an-mcp-server-a-practical-blueprint-for-secure-scalable-collaboration/ -- MEDIUM confidence
 
 ---
-*Feature research for: Remote MCP server with OAuth 2.1 — Claude AI Integration spike*
-*Researched: 2026-03-02*
+*Feature research for: Sketchpad v1.1 -- Per-user isolation and Just migration*
+*Researched: 2026-03-06*
