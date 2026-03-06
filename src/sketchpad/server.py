@@ -89,8 +89,3 @@ def create_app() -> FastMCP:
     register_tools(mcp)
 
     return mcp
-
-
-if __name__ == "__main__":
-    app = create_app()
-    app.run(transport="http", host="0.0.0.0", port=8000)
