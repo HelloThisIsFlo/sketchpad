@@ -55,20 +55,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ISOL-01 | — | Pending |
-| ISOL-02 | — | Pending |
-| ISOL-03 | — | Pending |
-| ISOL-04 | — | Pending |
-| STOR-01 | — | Pending |
-| STOR-02 | — | Pending |
-| BUILD-01 | — | Pending |
-| BUILD-02 | — | Pending |
+| ISOL-01 | Phase 5 | Pending |
+| ISOL-02 | Phase 5 | Pending |
+| ISOL-03 | Phase 5 | Pending |
+| ISOL-04 | Phase 5 | Pending |
+| STOR-01 | Phase 6 | Pending |
+| STOR-02 | Phase 6 | Pending |
+| BUILD-01 | Phase 7 | Pending |
+| BUILD-02 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 8 total
-- Mapped to phases: 0
-- Unmapped: 8 ⚠️
+- Mapped to phases: 8
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after initial definition*
+*Last updated: 2026-03-06 after roadmap creation*

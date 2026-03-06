@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Multi-Users
-status: defining_requirements
-stopped_at: ""
+status: ready_to_plan
+stopped_at: "Roadmap created, ready to plan Phase 5"
 last_updated: "2026-03-06"
-last_activity: 2026-03-06 — Milestone v1.1 started
+last_activity: 2026-03-06 — Roadmap created for v1.1 (3 phases, 8 requirements)
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** Defining requirements for v1.1 Multi-Users
+**Current focus:** Phase 5 — Per-User Storage Isolation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 5 of 7 (Per-User Storage Isolation) — first phase of v1.1
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-06 — Milestone v1.1 started
+Status: Ready to plan
+Last activity: 2026-03-06 — Roadmap created for v1.1
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -51,17 +53,18 @@ Last activity: 2026-03-06 — Milestone v1.1 started
 ### Decisions
 
 Full decision log in PROJECT.md Key Decisions table.
+Recent: Username-based user folders chosen (human-readable, rename = new sketchpad is acceptable).
 
 ### Pending Todos
 
-- **Per-user sketchpad segregation** (auth) — Segregate storage by OAuth username so each user gets their own sketchpad. Target: next milestone.
+None (per-user segregation is now the active milestone).
 
 ### Blockers/Concerns
 
-(All resolved in v1.0)
+- NFS subdirectory permissions on Synology NAS need empirical verification during Phase 5 deployment (cannot resolve with research alone)
 
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: v1.0 milestone archived
+Stopped at: Roadmap created for v1.1 Multi-Users
 Resume file: None
