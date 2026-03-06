@@ -16,8 +16,8 @@ Requirements for multi-user milestone. Each maps to roadmap phases.
 
 ### Storage Limits
 
-- [ ] **STOR-01**: `write_file` rejects content exceeding a configurable per-user size limit (env var)
-- [ ] **STOR-02**: `write_file` rejects writes when total data directory exceeds a configurable global size limit (env var)
+- [x] **STOR-01**: `write_file` rejects content exceeding a configurable per-user size limit (env var)
+- [x] **STOR-02**: `write_file` rejects writes when total data directory exceeds a configurable global size limit (env var)
 
 ### Build Tooling
 
@@ -59,8 +59,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ISOL-02 | Phase 5 | Complete |
 | ISOL-03 | Phase 5 | Complete |
 | ISOL-04 | Phase 5 | Complete |
-| STOR-01 | Phase 6 | Pending |
-| STOR-02 | Phase 6 | Pending |
+| STOR-01 | Phase 6 | Complete |
+| STOR-02 | Phase 6 | Complete |
 | BUILD-01 | Phase 7 | Pending |
 | BUILD-02 | Phase 7 | Pending |
 

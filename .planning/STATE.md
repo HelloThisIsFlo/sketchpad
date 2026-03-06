@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Multi-Users
 status: completed
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-06T20:10:43.902Z"
-last_activity: 2026-03-06 — Completed 05-02 wire user identity into tools
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-06T20:27:54.707Z"
+last_activity: 2026-03-06 — Completed 06-01 storage limits (per-user and global)
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 100
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** Phase 5 — Per-User Storage Isolation
+**Current focus:** Phase 6 — Storage Limits
 
 ## Current Position
 
-Phase: 5 of 7 (Per-User Storage Isolation) — first phase of v1.1
-Plan: 2 of 2 complete
+Phase: 6 of 7 (Storage Limits)
+Plan: 1 of 1 complete
 Status: Phase Complete
-Last activity: 2026-03-06 — Completed 05-02 wire user identity into tools
+Last activity: 2026-03-06 — Completed 06-01 storage limits (per-user and global)
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 3.3min
-- Total execution time: 46min
+- Total execution time: 49min
 
 **By Phase:**
 
@@ -50,6 +50,8 @@ Progress: [██████████] 100%
 | 5. Per-User Storage | 2/2 | 5min | 2.5min |
 | Phase 05 P01 | 2min | 2 tasks | 5 files |
 | Phase 05 P02 | 3min | 2 tasks | 2 files |
+| 6. Storage Limits | 1/1 | 3min | 3.0min |
+| Phase 06 P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -59,6 +61,7 @@ Full decision log in PROJECT.md Key Decisions table.
 Recent: No slugify library needed -- GitHub usernames already filesystem-safe; lowercase + regex is sufficient, injective, and idempotent.
 - [Phase 05]: No slugify library needed -- GitHub usernames already filesystem-safe; lowercase + regex sufficient
 - [Phase 05]: Assert (not exception) for missing auth -- fail-fast with no fallback to shared storage
+- [Phase 06]: SIZE_LIMIT replaced by MAX_STORAGE_USER (20KB) and MAX_STORAGE_GLOBAL (50MB) -- hard write-time enforcement replaces soft read-time warning
 
 ### Pending Todos
 
@@ -70,6 +73,6 @@ None (per-user segregation is now the active milestone).
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:10:43.899Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-storage-limits/06-CONTEXT.md
+Last session: 2026-03-06T20:27:54.705Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
