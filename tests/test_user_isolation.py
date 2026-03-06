@@ -234,3 +234,40 @@ def test_response_excludes_username(tmp_data_dir, mcp_with_tools):
     with auth_patch, config_patch:
         result = write_fn(content="test")
     assert "alice" not in result
+
+
+def test_tool_schema_excludes_username():
+    """Verify the tool JSON schema visible to Claude AI has no username/identity params."""
+    from fastmcp import FastMCP
+    from sketchpad.tools import register_tools
+
+    mcp = FastMCP("test")
+    register_tools(mcp)
+
+    async def _check():
+        # Inspect read_file schema
+        read_tool = await mcp.get_tool("read_file")
+        read_schema = read_tool.parameters
+        read_params = set(read_schema.get("properties", {}).keys())
+
+        # read_file should have zero parameters
+        assert read_params == set(), f"read_file should have no params, got {read_params}"
+
+        # Inspect write_file schema
+        write_tool = await mcp.get_tool("write_file")
+        write_schema = write_tool.parameters
+        write_params = set(write_schema.get("properties", {}).keys())
+
+        # write_file should have only content and mode
+        assert write_params == {"content", "mode"}, f"write_file params: {write_params}"
+
+        # Neither tool should have username-related parameters
+        forbidden = {"username", "login", "user", "identity", "identifier"}
+        assert read_params.isdisjoint(forbidden), (
+            f"read_file leaks identity: {read_params & forbidden}"
+        )
+        assert write_params.isdisjoint(forbidden), (
+            f"write_file leaks identity: {write_params & forbidden}"
+        )
+
+    asyncio.run(_check())
