@@ -65,6 +65,11 @@ OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 2. **Configure Cloudflare Tunnel hostname** — Point subdomain at sketchpad K8s Service.
 3. **Test from phone** — Open Claude AI app, add the integration, read/write the sketchpad.
 
+## Testing
+
+- **E2E test script: `test_oauth.py`** — The primary verification tool. Exercises the full real-user flow against a running server + tunnel: OAuth discovery, 401 enforcement, dynamic client registration, browser-based GitHub login, token exchange, refresh, and MCP tool calls (read/write/read-back). Run with `uv run python test_oauth.py`. Always use this for UAT — unit tests (pytest) verify code correctness but miss deployment and integration issues.
+- **Unit/integration tests: `uv run pytest`** — 23 tests covering path resolution, sanitization, traversal defense, tool isolation, auth enforcement, and schema safety. These use mocked auth and temp dirs.
+
 ## Constraints
 
 - **Auth protocol**: OAuth 2.1 with DCR and PKCE — required by Claude AI
