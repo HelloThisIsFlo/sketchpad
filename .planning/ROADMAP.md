@@ -51,10 +51,10 @@ Plans:
   1. A write exceeding the per-user size limit is rejected with a clear error message
   2. A write that would push the total data directory past the global limit is rejected with a clear error message
   3. Both limits are configurable via environment variables without code changes
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md — TDD: per-user and global storage size limits with config migration
 
 ### Phase 7: Build Tooling Migration
 **Goal**: Makefile is replaced by Justfile with identical functionality and CI updated to match
@@ -82,7 +82,7 @@ Phases execute in numeric order. Phase 7 is independent of 5-6 and could run in 
 | 3. Deploy + Integration | v1.0 | 3/3 | Complete | 2026-03-05 |
 | 4. Hardening | v1.0 | 2/2 | Complete | 2026-03-05 |
 | 5. Per-User Storage Isolation | v1.1 | 2/2 | Complete | 2026-03-06 |
-| 6. Storage Limits | v1.1 | 0/? | Not started | - |
+| 6. Storage Limits | v1.1 | 0/1 | Not started | - |
 | 7. Build Tooling Migration | v1.1 | 0/? | Not started | - |
 
 _Full v1.0 details: `.planning/milestones/v1.0-ROADMAP.md`_
