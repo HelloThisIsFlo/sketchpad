@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Multi-Users
-status: ready_to_plan
-stopped_at: "Roadmap created, ready to plan Phase 5"
-last_updated: "2026-03-06"
-last_activity: 2026-03-06 — Roadmap created for v1.1 (3 phases, 8 requirements)
+status: planning
+stopped_at: Phase 5 context gathered
+last_updated: "2026-03-06T18:24:06.089Z"
+last_activity: 2026-03-06 — Roadmap created for v1.1
 progress:
   total_phases: 3
   completed_phases: 0
@@ -65,6 +65,6 @@ None (per-user segregation is now the active milestone).
 
 ## Session Continuity
 
-Last session: 2026-03-06
-Stopped at: Roadmap created for v1.1 Multi-Users
-Resume file: None
+Last session: 2026-03-06T18:24:06.086Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-per-user-storage-isolation/05-CONTEXT.md
