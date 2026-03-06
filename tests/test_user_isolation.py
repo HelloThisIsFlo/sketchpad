@@ -33,7 +33,11 @@ def test_traversal_logged(tmp_data_dir, caplog):
     with caplog.at_level(logging.WARNING):
         with pytest.raises(ValueError):
             resolve_user_dir(tmp_data_dir, "github", "../etc")
-    assert "Path traversal attempt" in caplog.text
+    # "../etc" is caught by regex validation (dots/slashes are invalid GitHub chars)
+    # before reaching the is_relative_to defense-in-depth check. Either way, the
+    # operator sees a WARNING-level log entry for the suspicious input.
+    assert "../etc" in caplog.text
+    assert "WARNING" in caplog.text
 
 
 @pytest.mark.parametrize(
