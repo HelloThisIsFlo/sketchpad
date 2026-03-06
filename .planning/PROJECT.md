@@ -2,11 +2,20 @@
 
 ## What This Is
 
-A minimal remote MCP server exposing two tools — read and write a single file. Built in Python with FastMCP 3.1.0, deployed on a home Kubernetes cluster (Talos OS), exposed via Cloudflare Tunnel, and authenticated with OAuth 2.1 (DCR + PKCE) through GitHub. Proves the full Claude AI Integration chain works end-to-end.
+A minimal remote MCP server exposing two tools — read and write a single file per user. Built in Python with FastMCP 3.1.0, deployed on a home Kubernetes cluster (Talos OS), exposed via Cloudflare Tunnel, and authenticated with OAuth 2.1 (DCR + PKCE) through GitHub. Each authenticated user gets their own isolated sketchpad.
 
 ## Core Value
 
 OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server — if auth works, everything else is trivial.
+
+## Current Milestone: v1.1 Multi-Users
+
+**Goal:** Each authenticated user gets their own isolated sketchpad, segregated by OAuth username.
+
+**Target features:**
+- Per-user storage isolation (folder per username)
+- User identity extraction from OAuth token
+- Migrate build tooling from Makefile to Just
 
 ## Requirements
 
@@ -23,13 +32,16 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 
 ### Active
 
-(None — milestone complete. Define new requirements with `/gsd:new-milestone`)
+- [ ] Per-user sketchpad isolation via OAuth username
+- [ ] User identity extraction from OAuth token
+- [ ] Makefile → Just migration
 
 ### Out of Scope
 
 - Obsidian vault logic (search, listing, multiple files) — that's the next project
 - Cloudflare Tunnel daemon deployment — assumed to already exist on the cluster
-- Multi-user support — this is a personal tool, single user
+- Multi-user admin/management — no admin UI, users are self-service via OAuth
+- User collaboration/sharing — each user's sketchpad is fully isolated
 - Web UI — Claude AI is the only client
 - Rate limiting, logging, monitoring — unnecessary for a spike
 - Mobile app — Claude AI app is the client
@@ -79,6 +91,8 @@ OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 | GitHub Actions CI | Replaces local docker build+push; uses GITHUB_TOKEN | ✓ Good — no PAT needed |
 | Origin validation on /mcp only | Discovery, health, OAuth endpoints remain open | ✓ Good — CLIs pass through (no Origin) |
 | @mcp.custom_route for /health | Bypasses FastMCP auth for K8s probe | ✓ Good — avoids 401 on liveness checks |
+| Username-based user folders | Human-readable, simple. Username rename = new sketchpad (acceptable) | — Pending |
+| Fresh start for v1.1 | No migration of v1.0 single-user data | — Pending |
 
 ---
-*Last updated: 2026-03-06 after v1.0 milestone*
+*Last updated: 2026-03-06 after v1.1 milestone start*

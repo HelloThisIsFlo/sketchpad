@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: milestone_complete
-stopped_at: "v1.0 milestone archived — ready for /gsd:new-milestone"
-last_updated: "2026-03-06T14:15:19.887Z"
-last_activity: 2026-03-06 — Milestone v1.0 archived
+milestone: v1.1
+milestone_name: Multi-Users
+status: defining_requirements
+stopped_at: ""
+last_updated: "2026-03-06"
+last_activity: 2026-03-06 — Milestone v1.1 started
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v1.1 Multi-Users
 
 ## Current Position
 
-Milestone v1.0 MVP shipped 2026-03-06.
-All 4 phases, 12 plans complete. 32/32 requirements validated.
-
-Next: `/gsd:new-milestone` to define v1.1 or next project.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-06 — Milestone v1.1 started
 
 ## Performance Metrics
 
