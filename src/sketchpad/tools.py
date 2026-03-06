@@ -24,7 +24,7 @@ def _get_user_sketchpad_path() -> Path:
 
 def _calculate_dir_size(directory: Path) -> int:
     """Sum of all file sizes in a directory tree."""
-    return sum(f.stat().st_size for f in directory.rglob('*') if f.is_file())
+    return sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
 
 
 def register_tools(mcp):
@@ -62,7 +62,9 @@ def register_tools(mcp):
 
         # Per-user limit (STOR-01) -- check first, fail fast
         if mode == "append":
-            existing_size = sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
+            existing_size = (
+                sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
+            )
             resulting_size = existing_size + content_bytes
         else:
             resulting_size = content_bytes
@@ -74,7 +76,9 @@ def register_tools(mcp):
         # Global limit (STOR-02)
         data_dir = Path(cfg["DATA_DIR"]).resolve()
         global_size = _calculate_dir_size(data_dir)
-        current_file_size = sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
+        current_file_size = (
+            sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
+        )
         net_addition = resulting_size - current_file_size
         if global_size + net_addition > cfg["MAX_STORAGE_GLOBAL"]:
             logger.warning("Global storage limit exceeded for write")
@@ -90,4 +94,6 @@ def register_tools(mcp):
         else:
             sketchpad_path.write_text(content, encoding="utf-8")
 
-        return f"File updated ({mode} mode). Size: {sketchpad_path.stat().st_size} bytes."
+        return (
+            f"File updated ({mode} mode). Size: {sketchpad_path.stat().st_size} bytes."
+        )

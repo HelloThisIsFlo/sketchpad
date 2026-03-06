@@ -22,6 +22,7 @@ JSONRPC_HEADERS = {"Content-Type": "application/json"}
 
 # -- Test results tracker (same pattern as test_oauth.py) --------------------
 
+
 class TestResults:
     def __init__(self):
         self.passed = 0
@@ -55,6 +56,7 @@ class TestResults:
 
 
 # -- Test functions ----------------------------------------------------------
+
 
 def test_bad_origin(T: TestResults, client: httpx.Client):
     """POST /mcp with a disallowed Origin header -- expect 403."""
@@ -93,9 +95,7 @@ def test_no_token(T: TestResults, client: httpx.Client):
     )
     T.check("no token returns 401", resp.status_code, 401)
     # Case-insensitive header check
-    has_www_auth = any(
-        k.lower() == "www-authenticate" for k in resp.headers.keys()
-    )
+    has_www_auth = any(k.lower() == "www-authenticate" for k in resp.headers.keys())
     if has_www_auth:
         T.pass_("WWW-Authenticate header present")
     else:
@@ -125,6 +125,7 @@ def test_health_unaffected(T: TestResults, client: httpx.Client):
 
 
 # -- Main --------------------------------------------------------------------
+
 
 def main():
     T = TestResults()

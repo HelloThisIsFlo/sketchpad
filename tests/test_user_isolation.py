@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 
-from sketchpad.user_identity import resolve_user_dir
 from sketchpad.tools import WELCOME_MESSAGE, _get_user_sketchpad_path
+from sketchpad.user_identity import resolve_user_dir
 
 
 def test_user_path_resolution(tmp_data_dir):
@@ -126,9 +126,7 @@ def _mock_config(tmp_data_dir):
 def _patch_auth_and_config(tmp_data_dir, login):
     """Return a tuple of patchers for get_access_token and get_config."""
     token = MockAccessToken({"login": login}) if login is not None else None
-    auth_patch = patch(
-        "sketchpad.tools.get_access_token", return_value=token
-    )
+    auth_patch = patch("sketchpad.tools.get_access_token", return_value=token)
     config_patch = patch(
         "sketchpad.tools.get_config", return_value=_mock_config(tmp_data_dir)
     )
@@ -145,6 +143,7 @@ def _get_tool_fn(mcp, name):
 def mcp_with_tools():
     """Create a FastMCP instance with tools registered."""
     from fastmcp import FastMCP
+
     from sketchpad.tools import register_tools
 
     mcp = FastMCP("test")
@@ -221,8 +220,10 @@ def test_missing_token_raises(tmp_data_dir):
 def test_missing_login_claim_raises(tmp_data_dir):
     """A token without a login claim is rejected."""
     token = MockAccessToken(claims={})
-    with patch("sketchpad.tools.get_access_token", return_value=token), \
-         patch("sketchpad.tools.get_config", return_value=_mock_config(tmp_data_dir)):
+    with (
+        patch("sketchpad.tools.get_access_token", return_value=token),
+        patch("sketchpad.tools.get_config", return_value=_mock_config(tmp_data_dir)),
+    ):
         with pytest.raises(AssertionError, match="identity"):
             _get_user_sketchpad_path()
 
@@ -240,6 +241,7 @@ def test_response_excludes_username(tmp_data_dir, mcp_with_tools):
 def test_tool_schema_excludes_username():
     """Verify the tool JSON schema visible to Claude AI has no username/identity params."""
     from fastmcp import FastMCP
+
     from sketchpad.tools import register_tools
 
     mcp = FastMCP("test")
@@ -252,7 +254,9 @@ def test_tool_schema_excludes_username():
         read_params = set(read_schema.get("properties", {}).keys())
 
         # read_file should have zero parameters
-        assert read_params == set(), f"read_file should have no params, got {read_params}"
+        assert read_params == set(), (
+            f"read_file should have no params, got {read_params}"
+        )
 
         # Inspect write_file schema
         write_tool = await mcp.get_tool("write_file")

@@ -36,6 +36,7 @@ NO_REFRESH_PROVIDERS = {"github"}
 
 # -- Test results tracker ----------------------------------------------------
 
+
 class TestResults:
     def __init__(self):
         self.passed = 0
@@ -81,6 +82,7 @@ class TestResults:
 
 # -- SSE / MCP helpers -------------------------------------------------------
 
+
 def parse_sse(text: str):
     """Extract the first JSON object from an SSE or plain-JSON response."""
     # If it parses directly as JSON, return it (non-SSE response)
@@ -93,7 +95,7 @@ def parse_sse(text: str):
     for line in text.splitlines():
         line = line.strip()
         if line.startswith("data:"):
-            payload = line[len("data:"):].strip()
+            payload = line[len("data:") :].strip()
             if payload:
                 try:
                     return json.loads(payload)
@@ -102,8 +104,13 @@ def parse_sse(text: str):
     raise ValueError(f"No JSON found in response:\n{text[:500]}")
 
 
-def mcp_request(client: httpx.Client, url: str, payload: dict,
-                token: str, session_id: str | None = None) -> tuple[dict, str | None]:
+def mcp_request(
+    client: httpx.Client,
+    url: str,
+    payload: dict,
+    token: str,
+    session_id: str | None = None,
+) -> tuple[dict, str | None]:
     """POST a JSON-RPC request to /mcp with correct headers.
 
     Returns (parsed_json, session_id). The session_id may be updated
@@ -141,6 +148,7 @@ def wait_for_url(url: str, timeout: float = 10, interval: float = 0.5) -> bool:
 
 # -- OAuth callback server ---------------------------------------------------
 
+
 class CallbackServer:
     """Threaded HTTP server that listens for the OAuth redirect callback."""
 
@@ -175,7 +183,9 @@ class CallbackServer:
 
                 state = params.get("state", [None])[0]
                 if state != parent.expected_state:
-                    parent.error = f"State mismatch: expected {parent.expected_state}, got {state}"
+                    parent.error = (
+                        f"State mismatch: expected {parent.expected_state}, got {state}"
+                    )
                     self._respond(400, "Authorization Failed", parent.error)
                     return
 
@@ -186,19 +196,22 @@ class CallbackServer:
                     return
 
                 parent.auth_code = code
-                self._respond(200, "Authorization Successful",
-                              "You can close this tab and return to the terminal.")
+                self._respond(
+                    200,
+                    "Authorization Successful",
+                    "You can close this tab and return to the terminal.",
+                )
 
             def _respond(self, status: int, title: str, message: str):
                 color = "#16a34a" if status == 200 else "#dc2626"
                 bg = "#f0fdf4" if status == 200 else "#fef2f2"
                 html = (
-                    f'<!DOCTYPE html><html><head><title>{title}</title></head>'
+                    f"<!DOCTYPE html><html><head><title>{title}</title></head>"
                     f'<body style="font-family:system-ui,sans-serif;display:flex;'
-                    f'justify-content:center;align-items:center;height:100vh;margin:0;'
+                    f"justify-content:center;align-items:center;height:100vh;margin:0;"
                     f'background:{bg}"><div style="text-align:center">'
                     f'<h1 style="color:{color}">{title}</h1>'
-                    f'<p>{message}</p></div></body></html>'
+                    f"<p>{message}</p></div></body></html>"
                 )
                 self.send_response(status)
                 self.send_header("Content-Type", "text/html")
@@ -233,6 +246,7 @@ class CallbackServer:
 
 # -- PKCE helpers ------------------------------------------------------------
 
+
 def generate_pkce() -> tuple[str, str]:
     """Generate PKCE code_verifier and code_challenge (S256)."""
     verifier = secrets.token_urlsafe(32)
@@ -242,6 +256,7 @@ def generate_pkce() -> tuple[str, str]:
 
 
 # -- Main flow ---------------------------------------------------------------
+
 
 def main():
     T = TestResults()
@@ -275,7 +290,9 @@ def main():
 
     server_url = env.get("SERVER_URL", "")
     if not server_url or server_url.startswith("http://localhost"):
-        print("FATAL: SERVER_URL in .env must be set to your tunnel URL (not localhost).")
+        print(
+            "FATAL: SERVER_URL in .env must be set to your tunnel URL (not localhost)."
+        )
         sys.exit(1)
     print(f"  SERVER_URL: {server_url} -- OK")
 
@@ -292,7 +309,9 @@ def main():
     print()
     input("  Press Enter when the server is running...")
 
-    local_discovery = f"http://localhost:{SERVER_PORT}/.well-known/oauth-authorization-server"
+    local_discovery = (
+        f"http://localhost:{SERVER_PORT}/.well-known/oauth-authorization-server"
+    )
     while True:
         if wait_for_url(local_discovery, timeout=3):
             print(f"  Server on localhost:{SERVER_PORT} -- OK")
@@ -331,7 +350,9 @@ def main():
         print()
 
         print("Fetching /.well-known/oauth-authorization-server ...")
-        as_meta = client.get(f"{server_url}/.well-known/oauth-authorization-server").json()
+        as_meta = client.get(
+            f"{server_url}/.well-known/oauth-authorization-server"
+        ).json()
         print(json.dumps(as_meta, indent=2))
 
         auth_endpoint = as_meta.get("authorization_endpoint", "")
@@ -343,11 +364,15 @@ def main():
         T.check_not_empty("registration_endpoint present", reg_endpoint)
 
         print()
-        print("Fetching /.well-known/oauth-protected-resource/mcp (RFC 9728 path-aware) ...")
+        print(
+            "Fetching /.well-known/oauth-protected-resource/mcp (RFC 9728 path-aware) ..."
+        )
         pr_resp = client.get(f"{server_url}/.well-known/oauth-protected-resource/mcp")
         if pr_resp.status_code != 200:
             print(f"  FAIL: returned {pr_resp.status_code}")
-            print("        (RFC 9728 Section 3.1: path-aware URL includes the MCP resource path)")
+            print(
+                "        (RFC 9728 Section 3.1: path-aware URL includes the MCP resource path)"
+            )
             print()
             print("=== ABORTED: DISC-02 is a required endpoint ===")
             sys.exit(1)
@@ -514,16 +539,22 @@ def main():
 
         # 7a: Initialize
         print("Sending initialize request...")
-        init_body, session_id = mcp_request(client, mcp_url, {
-            "jsonrpc": "2.0",
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2025-03-26",
-                "capabilities": {},
-                "clientInfo": {"name": "test-oauth-script", "version": "1.0.0"},
+        init_body, session_id = mcp_request(
+            client,
+            mcp_url,
+            {
+                "jsonrpc": "2.0",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "test-oauth-script", "version": "1.0.0"},
+                },
+                "id": 1,
             },
-            "id": 1,
-        }, access_token, session_id)
+            access_token,
+            session_id,
+        )
         print(json.dumps(init_body, indent=2))
 
         proto_version = (init_body.get("result") or {}).get("protocolVersion", "")
@@ -535,39 +566,62 @@ def main():
         print()
         print("Sending initialized notification...")
         try:
-            mcp_request(client, mcp_url, {
-                "jsonrpc": "2.0",
-                "method": "notifications/initialized",
-            }, access_token, session_id)
+            mcp_request(
+                client,
+                mcp_url,
+                {
+                    "jsonrpc": "2.0",
+                    "method": "notifications/initialized",
+                },
+                access_token,
+                session_id,
+            )
         except Exception:
             pass  # Notifications may return empty or 202
 
         # 7b: tools/list
         print()
         print("Calling tools/list...")
-        tools_body, session_id = mcp_request(client, mcp_url, {
-            "jsonrpc": "2.0",
-            "method": "tools/list",
-            "id": 2,
-        }, access_token, session_id)
+        tools_body, session_id = mcp_request(
+            client,
+            mcp_url,
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/list",
+                "id": 2,
+            },
+            access_token,
+            session_id,
+        )
         print(json.dumps(tools_body, indent=2))
 
         tools = (tools_body.get("result") or {}).get("tools", [])
         T.check("tools/list returns 2 tools", len(tools), 2)
 
         tool_names = {t["name"] for t in tools}
-        T.check_not_empty("read_file tool present", "read_file" if "read_file" in tool_names else "")
-        T.check_not_empty("write_file tool present", "write_file" if "write_file" in tool_names else "")
+        T.check_not_empty(
+            "read_file tool present", "read_file" if "read_file" in tool_names else ""
+        )
+        T.check_not_empty(
+            "write_file tool present",
+            "write_file" if "write_file" in tool_names else "",
+        )
 
         # 7c: read_file
         print()
         print("Calling read_file...")
-        read_body, session_id = mcp_request(client, mcp_url, {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {}},
-            "id": 3,
-        }, access_token, session_id)
+        read_body, session_id = mcp_request(
+            client,
+            mcp_url,
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {}},
+                "id": 3,
+            },
+            access_token,
+            session_id,
+        )
         print(json.dumps(read_body, indent=2))
 
         read_content = ""
@@ -579,12 +633,21 @@ def main():
         # 7d: write_file
         print()
         print("Calling write_file...")
-        write_body, session_id = mcp_request(client, mcp_url, {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "write_file", "arguments": {"content": "Hello from test_oauth.py!"}},
-            "id": 4,
-        }, access_token, session_id)
+        write_body, session_id = mcp_request(
+            client,
+            mcp_url,
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {
+                    "name": "write_file",
+                    "arguments": {"content": "Hello from test_oauth.py!"},
+                },
+                "id": 4,
+            },
+            access_token,
+            session_id,
+        )
         print(json.dumps(write_body, indent=2))
 
         write_content = ""
@@ -596,19 +659,29 @@ def main():
         # 7e: Read back written content
         print()
         print("Calling read_file again (verify written content)...")
-        readback_body, session_id = mcp_request(client, mcp_url, {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {}},
-            "id": 5,
-        }, access_token, session_id)
+        readback_body, session_id = mcp_request(
+            client,
+            mcp_url,
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {}},
+                "id": 5,
+            },
+            access_token,
+            session_id,
+        )
         print(json.dumps(readback_body, indent=2))
 
         readback_content = ""
         result_content = (readback_body.get("result") or {}).get("content", [])
         if result_content:
             readback_content = result_content[0].get("text", "")
-        T.check("read_file returns written content", readback_content, "Hello from test_oauth.py!")
+        T.check(
+            "read_file returns written content",
+            readback_content,
+            "Hello from test_oauth.py!",
+        )
 
     finally:
         client.close()

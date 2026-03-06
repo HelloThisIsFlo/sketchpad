@@ -1,4 +1,5 @@
 """Tests for per-user and global storage size limits (STOR-01, STOR-02)."""
+
 import asyncio
 import logging
 import re
@@ -9,7 +10,6 @@ import pytest
 
 from sketchpad.config import get_config
 from sketchpad.tools import register_tools
-
 
 # ---------------------------------------------------------------------------
 # Test helpers -- same pattern as test_user_isolation.py
@@ -42,9 +42,7 @@ def _mock_config(tmp_data_dir, **overrides):
 def _patch_auth_and_config(tmp_data_dir, login, **config_overrides):
     """Return a tuple of patchers for get_access_token and get_config."""
     token = MockAccessToken({"login": login}) if login is not None else None
-    auth_patch = patch(
-        "sketchpad.tools.get_access_token", return_value=token
-    )
+    auth_patch = patch("sketchpad.tools.get_access_token", return_value=token)
     config_patch = patch(
         "sketchpad.tools.get_config",
         return_value=_mock_config(tmp_data_dir, **config_overrides),
