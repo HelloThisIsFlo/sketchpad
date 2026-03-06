@@ -28,6 +28,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install just
+        uses: extractions/setup-just@v3
+        with:
+          just-version: '1'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --dev
+
+      - name: Run tests
+        run: just test
+
+      - name: Run linter
+        run: just lint
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
