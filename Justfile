@@ -7,34 +7,50 @@ TAG   := "sha-" + SHA
 default:
     @just --list
 
+# --- Run ---
+
+# Start tunnel + server together (Ctrl-C stops both)
+[group('run')]
+dev:
+    #!/usr/bin/env bash
+    trap 'kill 0' EXIT
+    just tunnel &
+    just server &
+    wait
+
+# Start Cloudflare tunnel for local dev
+[group('run')]
+tunnel:
+    cloudflared tunnel run
+
+# Run local dev server
+[group('run')]
+server:
+    uv run python -m sketchpad
+
+# --- Check ---
+
+# Run pytest test suite
+[group('check')]
+test:
+    uv run pytest
+
+# Run ruff linter
+[group('check')]
+lint:
+    uv run ruff check .
+
+# Format Python files with ruff
+[group('check')]
+fmt:
+    uv run ruff format .
+
 # --- Build ---
 
 # Build Docker image for linux/amd64
 [group('build')]
 build:
     docker buildx build --platform linux/amd64 -t {{IMAGE}}:{{TAG}} -t {{IMAGE}}:latest --load .
-
-# --- Dev ---
-
-# Run pytest test suite
-[group('dev')]
-test:
-    uv run pytest
-
-# Run ruff linter
-[group('dev')]
-lint:
-    uv run ruff check .
-
-# Format Python files with ruff
-[group('dev')]
-fmt:
-    uv run ruff format .
-
-# Run local dev server
-[group('dev')]
-dev:
-    uv run python -m sketchpad
 
 # --- K8s ---
 
