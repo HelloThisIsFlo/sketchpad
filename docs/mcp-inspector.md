@@ -7,18 +7,33 @@ MCP Inspector is an interactive debugging tool for MCP servers. It lets you brow
 Run the inspector (no install needed):
 
 ```bash
-npx @anthropic/mcp-inspector
+npx @modelcontextprotocol/inspector
 ```
 
 This opens a web UI (usually at `http://localhost:6274`).
 
 ## Connecting to Sketchpad
 
-1. In the Inspector UI, set:
+The Inspector offers two connection modes: **direct** (browser talks to the server) and **proxy** (Inspector backend relays requests). Use **proxy mode** -- Sketchpad doesn't serve CORS headers (by design, since Claude AI doesn't need them), so direct browser requests get blocked by the browser's CORS preflight before they even reach the server.
+
+Add the Inspector origin to `ALLOWED_ORIGINS` in your `.env` so the server's origin allowlist accepts proxied requests:
+
+```
+ALLOWED_ORIGINS=https://claude.ai,https://www.claude.ai,http://localhost:6274
+```
+
+Then in the Inspector UI:
+
+1. Set:
    - **Transport Type:** Streamable HTTP
-   - **URL:** `http://localhost:8000/mcp` (or your tunnel URL)
-2. Click **Connect**
-3. The Inspector handles OAuth automatically -- it will open a browser window for GitHub login when needed
+   - **URL:** `https://sketchpad.kempenich.dev/mcp`
+   - **Connection mode:** Proxy
+2. Before connecting, click **Open Auth Settings** to configure OAuth:
+
+   ![Inspector auth settings prompt](images/inspector-auth.png)
+
+   Enter the OAuth credentials (Client ID, etc.) and complete the GitHub login flow.
+3. Click **Connect**
 
 ## Fun Things to Try
 

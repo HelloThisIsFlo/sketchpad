@@ -5,6 +5,7 @@ This guide sets up a complete local development environment for the Sketchpad MC
 ## Prerequisites
 
 - **Python 3.12** -- check with `python3 --version`
+- **just** -- install with `brew install just` (macOS) or see [https://just.systems/man/en/installation.html](https://just.systems/man/en/installation.html)
 - **uv** -- install from [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/)
 - **cloudflared** -- install with `brew install cloudflared` (macOS) or see [https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
 - **A Cloudflare account** with the `kempenich.dev` domain (for the named tunnel)
@@ -157,33 +158,33 @@ GITHUB_CLIENT_SECRET=abcdef1234...
 
 ## Day-to-Day Workflow
 
-After the one-time setup, running the server is two commands in two terminals.
+After the one-time setup, running the server is a single command.
 
-### Terminal 1: Start the Tunnel
-
-```bash
-cloudflared tunnel run
-```
-
-Leave this running. You'll see connection logs as Cloudflare establishes the tunnel. (This uses `~/.cloudflared/config.yml`, which symlinks to `config-themac.yml`.)
-
-### Terminal 2: Start the Server
+### Start Everything
 
 ```bash
-uv run python -m sketchpad
+just dev
 ```
 
-The server starts on `http://localhost:8000` and reads all config from `.env`.
+This starts both the Cloudflare tunnel and the MCP server together. Ctrl-C stops both.
+
+If you prefer separate terminals (e.g., to restart the server without restarting the tunnel):
+
+```bash
+# Terminal 1
+just tunnel
+
+# Terminal 2
+just server
+```
 
 **Verification:** Visit `https://sketchpad.kempenich.dev/.well-known/oauth-authorization-server` in your browser. You should see the OAuth metadata JSON.
 
-### Running the E2E Test
+### Running Tests
 
 ```bash
-uv run python test_oauth.py
+just test
 ```
-
-The script guides you through setup — it will prompt you to confirm the server and tunnel are running, verify connectivity to both, then run the full OAuth flow. The only manual step during the test is completing GitHub login in the browser.
 
 ## How It Works
 
