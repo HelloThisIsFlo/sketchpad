@@ -45,21 +45,64 @@
 
 ---
 
+## Milestone: v1.1 -- Multi-Users
+
+**Shipped:** 2026-03-07
+**Phases:** 3 | **Plans:** 5 | **Total execution:** 11min
+
+### What Was Built
+- Per-user storage isolation via OAuth identity (resolve_user_dir with regex + Path.resolve defense-in-depth)
+- Write-time storage limits: per-user (20KB) and global (50MB) with configurable env vars
+- Justfile with 10 recipes replacing Makefile, ruff linter/formatter
+- CI pipeline with test+lint gates before Docker build+push
+- 35 tests (23 isolation + 12 storage limits)
+
+### What Worked
+- **TDD red-green pattern** -- writing failing tests first in Phase 5 and 6 caught a plan bug (traversal test expected wrong log message) before production code was written. The test was the spec.
+- **Defense-in-depth** -- regex validation + Path.resolve() + is_relative_to() means three independent layers catch traversal. Each is simple; together they're robust.
+- **Minimal v1.1 scope** -- 3 phases, 5 plans, 11min total execution. Per-user isolation is the only thing that matters for multi-user; storage limits and build tooling were low-risk additions.
+- **Phase 7 independence** -- build tooling migration had no dependency on phases 5-6, could have run in parallel. Clean dependency graph.
+
+### What Was Inefficient
+- **Nothing significant** -- the shortest milestone. Every plan executed in 1-3min. No gap closure plans needed (learned from v1.0). The audit passed clean on first run.
+
+### Patterns Established
+- TDD red-green: write failing tests first, implement to pass
+- Provider-scoped path resolution: `data_dir / provider / sanitized_identifier`
+- Pre-write validation: check limits before any disk I/O
+- `just <recipe>` for all project commands
+- Ruff E4/E7/E9/F/B/I as lint baseline
+
+### Key Lessons
+1. **GitHub usernames are already filesystem-safe** -- `[a-zA-Z0-9-]`, 1-39 chars. No slugify needed. Know your input domain before adding sanitization libraries.
+2. **Assert > Exception for security invariants** -- `assert token is not None` gives a clear crash message and guarantees no code path falls back to shared storage. Exceptions invite `except` handlers that soften the guarantee.
+3. **Replace config keys atomically** -- Phase 6 renamed SIZE_LIMIT to MAX_STORAGE_USER/GLOBAL. The plan's test expected the old key removed before the code was updated, causing KeyError. Config changes must be atomic across test mocks and production code.
+
+### Cost Observations
+- Model mix: ~80% opus, ~20% sonnet (research agents)
+- Total execution: 11min across 5 plans
+- Notable: Average 2.2min/plan -- faster than v1.0 (3.4min). TDD plans are highly structured, less ambiguity = faster execution.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
 | Milestone | Execution Time | Phases | Key Change |
 |-----------|---------------|--------|------------|
-| v1.0 | 41min | 4 | First milestone — established yolo + fine granularity workflow |
+| v1.0 | 41min | 4 | First milestone -- established yolo + fine granularity workflow |
+| v1.1 | 11min | 3 | TDD red-green pattern, Nyquist validation, audit-before-ship |
 
 ### Cumulative Quality
 
 | Milestone | Requirements | Coverage | Audit Score |
 |-----------|-------------|----------|-------------|
 | v1.0 | 32/32 | 100% | Passed (0 gaps, 0 tech debt) |
+| v1.1 | 8/8 | 100% | Passed (0 gaps, 0 tech debt) |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. Trivial business logic isolates infrastructure/auth problems — keep spikes simple
-2. Gap closure plans are cheaper than shipping with gaps — audit early
+1. Trivial business logic isolates infrastructure/auth problems -- keep spikes simple
+2. Gap closure plans are cheaper than shipping with gaps -- audit early
+3. TDD plans execute faster (2.2min avg vs 3.4min) -- structured approach reduces ambiguity
