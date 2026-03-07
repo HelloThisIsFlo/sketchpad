@@ -21,38 +21,27 @@ kubectl delete configmap placeholder-config -n sketchpad
 
 The placeholder Service (`sketchpad`) will be updated in-place by the next step.
 
-## Build and Push
+## Build
 
-Use the Makefile targets to build and push the container image. This is an alternative to waiting for CI -- useful for quick iterations.
-
-```bash
-make build    # Build image tagged with git SHA + latest
-make push     # Push both tags to ghcr.io
-```
-
-Or do both at once:
+Build the container image locally. This is an alternative to waiting for CI -- useful for quick iterations.
 
 ```bash
-make build push
+just build    # Build image tagged with git SHA + latest
 ```
+
+CI automatically builds and pushes on every merge to main.
 
 ## Deploy
 
 Apply the K8s manifests and wait for the rollout:
 
 ```bash
-make deploy
+just deploy
 ```
 
 This runs:
 1. `kubectl apply` on `k8s/deployment.yaml` and `k8s/service.yaml`
 2. `kubectl rollout status` with a 120s timeout
-
-Or do everything (build + push + deploy):
-
-```bash
-make all
-```
 
 ## Verify
 
@@ -92,7 +81,7 @@ kubectl logs -f deployment/sketchpad -n sketchpad
 2. Deploy the new image:
 
 ```bash
-make deploy
+just deploy
 ```
 
 The Deployment uses `imagePullPolicy: Always` with the `latest` tag, so `kubectl rollout restart` also works:
@@ -104,5 +93,5 @@ kubectl rollout restart deployment/sketchpad -n sketchpad
 ## Quick Reference
 
 ```bash
-make status   # Show pods and services in the sketchpad namespace
+just status   # Show pods and services in the sketchpad namespace
 ```

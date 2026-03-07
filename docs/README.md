@@ -6,12 +6,8 @@ For someone who has done this before -- all commands, no explanation:
 
 ```bash
 # Build and deploy
-make all
-
-# Or step by step:
-make build
-make push
-make deploy
+just build
+just deploy
 
 # Verify
 kubectl get pods -n sketchpad
