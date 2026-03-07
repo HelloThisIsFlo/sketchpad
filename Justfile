@@ -14,7 +14,7 @@ default:
 dev:
     #!/usr/bin/env bash
     trap 'kill 0' EXIT
-    just tunnel &
+    just tunnel > /dev/null 2>&1 &
     just server &
     wait
 
