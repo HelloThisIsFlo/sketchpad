@@ -57,7 +57,8 @@ Full decision log in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-None.
+- Validate write_file mode parameter (api) — `.planning/todos/pending/2026-03-07-validate-write-file-mode-parameter.md`
+- Per-user sketchpad segregation (auth) — `.planning/todos/pending/2026-03-05-per-user-sketchpad-segregation.md`
 
 ### Blockers/Concerns
 
