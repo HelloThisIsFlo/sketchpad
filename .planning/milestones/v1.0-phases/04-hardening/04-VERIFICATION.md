@@ -94,7 +94,7 @@ No TODO/FIXME/stub/placeholder patterns found in any of the 5 modified files. Al
 ### 2. Phone/web client verification (recommended)
 
 **Test:** Open Claude AI on phone, ask Claude to read and write to your sketchpad
-**Expected:** Both operations complete normally with the server at thehome-sketchpad.kempenich.dev
+**Expected:** Both operations complete normally with the server at sketchpad.kempenich.ai
 **Why human:** The phone client sends `Origin: https://claude.ai` — only a real browser/app test confirms the allowlist entry is matched correctly (no trailing slash, no case mismatch, etc.) and the middleware passes it through.
 
 ---

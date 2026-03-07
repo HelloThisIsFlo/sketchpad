@@ -5,7 +5,7 @@ status: passed
 score: 10/10 must-haves verified
 human_verification:
   - test: "Claude Code CLI OAuth flow"
-    expected: "claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.dev/mcp succeeds; /mcp -> Authenticate -> GitHub login completes without error; token is issued"
+    expected: "claude mcp add --transport http sketchpad https://sketchpad.kempenich.ai/mcp succeeds; /mcp -> Authenticate -> GitHub login completes without error; token is issued"
     why_human: "Task 3 (blocking human gate) was auto-approved via auto_advance mode — no human actually ran this. OAuth redirect flow requires a browser and cannot be scripted."
   - test: "read_file and write_file tool calls via Claude Code CLI"
     expected: "Claude Code can call read_file and the result appears in the conversation; write_file updates the content; a subsequent read_file returns the updated content in the same conversation"
@@ -14,7 +14,7 @@ human_verification:
     expected: "Content written in one conversation is readable in a new conversation after kubectl rollout restart deployment/sketchpad -n sketchpad completes"
     why_human: "Requires live K8s cluster access and two separate Claude Code conversations. PVC persistence under restarts cannot be verified from codebase inspection alone."
   - test: "GitHub OAuth App callback URL updated in GitHub settings"
-    expected: "GitHub OAuth App shows Authorization callback URL = https://thehome-sketchpad.kempenich.dev/auth/callback (not /github/callback)"
+    expected: "GitHub OAuth App shows Authorization callback URL = https://sketchpad.kempenich.ai/auth/callback (not /github/callback)"
     why_human: "This is a GitHub settings change that only the user can perform and verify. It is a pre-requisite for the OAuth flow to work."
 ---
 
@@ -85,7 +85,7 @@ All artifacts from Plans 01-03 verified:
 | k8s/deployment.yaml | k8s/service.yaml | label selector app: sketchpad | WIRED | deployment.yaml labels pod template with app: sketchpad (line 29); service.yaml selector: app: sketchpad (line 25) |
 | Makefile deploy target | k8s/deployment.yaml + k8s/service.yaml | kubectl apply -f | WIRED | `kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml -n $(NS)` present on line 16 |
 | docs/README.md | docs/01-05-*.md | markdown links in numbered guide list | WIRED | All 5 links present: [.*](01-...) through [.*](05-...) at lines 29-33 |
-| Claude Code CLI | https://thehome-sketchpad.kempenich.dev/mcp | claude mcp add --transport http | DOCUMENTED | Command present in docs/05-claude-ai-setup.md and docs/README.md Quick Start; cannot verify live connection without cluster access |
+| Claude Code CLI | https://sketchpad.kempenich.ai/mcp | claude mcp add --transport http | DOCUMENTED | Command present in docs/05-claude-ai-setup.md and docs/README.md Quick Start; cannot verify live connection without cluster access |
 | Cloudflare Tunnel | k8s Service sketchpad:80 -> pod:8000 | sketchpad.sketchpad.svc.cluster.local:80 | DOCUMENTED | URL http://sketchpad.sketchpad.svc.cluster.local:80 documented in k8s/service.yaml comment; live routing cannot be verified from codebase |
 
 
@@ -119,13 +119,13 @@ No substantive anti-patterns found. The "placeholder" hit is a comment explainin
 
 #### 1. Claude Code CLI OAuth Flow
 
-**Test:** Run `claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.dev/mcp` in a terminal. Inside Claude Code, run `/mcp`, select "Authenticate" for sketchpad, complete the GitHub login in the browser popup.
+**Test:** Run `claude mcp add --transport http sketchpad https://sketchpad.kempenich.ai/mcp` in a terminal. Inside Claude Code, run `/mcp`, select "Authenticate" for sketchpad, complete the GitHub login in the browser popup.
 
 **Expected:** OAuth flow completes without error. GitHub redirects back to Claude Code. A token is issued and Claude Code confirms the server is connected.
 
 **Why human:** Plan 03-03 Task 3 was a blocking `checkpoint:human-verify` gate. It was auto-approved via `auto_advance` mode — no human actually ran this test. This is the core E2E gate for E2E-01, E2E-02, E2E-03.
 
-**Pre-requisite:** GitHub OAuth App callback URL must be updated to `https://thehome-sketchpad.kempenich.dev/auth/callback` in GitHub settings (https://github.com/settings/developers -> OAuth Apps -> Sketchpad). This is not verifiable from the codebase.
+**Pre-requisite:** GitHub OAuth App callback URL must be updated to `https://sketchpad.kempenich.ai/auth/callback` in GitHub settings (https://github.com/settings/developers -> OAuth Apps -> Sketchpad). This is not verifiable from the codebase.
 
 #### 2. read_file and write_file Tool Calls
 
@@ -145,7 +145,7 @@ No substantive anti-patterns found. The "placeholder" hit is a comment explainin
 
 #### 4. GitHub OAuth App Callback URL (Pre-requisite)
 
-**Test:** Go to https://github.com/settings/developers -> OAuth Apps -> Sketchpad. Verify "Authorization callback URL" shows `https://thehome-sketchpad.kempenich.dev/auth/callback`.
+**Test:** Go to https://github.com/settings/developers -> OAuth Apps -> Sketchpad. Verify "Authorization callback URL" shows `https://sketchpad.kempenich.ai/auth/callback`.
 
 **Expected:** Callback URL is /auth/callback, not /github/callback.
 

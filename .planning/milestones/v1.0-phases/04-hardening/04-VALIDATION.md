@@ -20,7 +20,7 @@ validated: 2026-03-05
 |----------|-------|
 | **Framework** | Manual test scripts (Python + httpx), no pytest |
 | **Config file** | none — standalone scripts |
-| **Quick run command** | `curl -s -o /dev/null -w "%{http_code}" -H "Origin: https://evil.com" -X POST https://thehome-sketchpad.kempenich.dev/mcp` |
+| **Quick run command** | `curl -s -o /dev/null -w "%{http_code}" -H "Origin: https://evil.com" -X POST https://sketchpad.kempenich.ai/mcp` |
 | **Full suite command** | `python test_security.py && python test_oauth.py` |
 | **Estimated runtime** | ~5 seconds |
 

@@ -84,7 +84,7 @@ The user ran the E2E test and fixed issues in a separate session. Four commits (
 | `Dockerfile` | Multi-stage uv build, CMD runs python -m sketchpad | VERIFIED | Two-stage build; CMD ["python", "-m", "sketchpad"] |
 | `test_oauth.py` | Python E2E test: discovery, 401, DCR, OAuth flow, MCP tool calls | VERIFIED | Replaced test-oauth.sh; uses httpx + SSE parsing, threaded callback server, provider-aware skip logic |
 | `uv.lock` | Locked dependency tree | VERIFIED | fastmcp 3.1.0 resolved |
-| `.env.example` | Template with all config vars including OAUTH_PROVIDER | VERIFIED | OAUTH_PROVIDER=github, SERVER_URL=https://themac-sketchpad.kempenich.dev |
+| `.env.example` | Template with all config vars including OAUTH_PROVIDER | VERIFIED | OAUTH_PROVIDER=github, SERVER_URL=https://sketchpad.kempenich.dev |
 | `docs/local-development.md` | Named tunnel setup + day-to-day workflow | VERIFIED | Tutorial-style guide; named tunnel "TheMac", permanent hostname |
 
 ---
@@ -161,7 +161,7 @@ For a future provider that issues refresh tokens (e.g., Google), these tests wou
 Plan 04 corrected the test URL from `/.well-known/oauth-protected-resource` to `/.well-known/oauth-protected-resource/mcp` (RFC 9728 path-aware). Commit `66a0e4b`.
 
 **Gap 2 — OAuth browser flow not executed (CLOSED by human verification)**
-User ran `test_oauth.py` via named Cloudflare tunnel (`themac-sketchpad.kempenich.dev`). Full OAuth flow completed: GitHub login → callback → token exchange → all MCP tool calls. Result: 16 PASS, 0 FAIL, 2 SKIP.
+User ran `test_oauth.py` via named Cloudflare tunnel (`sketchpad.kempenich.dev`). Full OAuth flow completed: GitHub login → callback → token exchange → all MCP tool calls. Result: 16 PASS, 0 FAIL, 2 SKIP.
 
 **Gap 3 — MCP tool calls not executed (CLOSED by human verification)**
 Same test run as Gap 2. initialize, tools/list, read_file, write_file, and read-back all PASS.

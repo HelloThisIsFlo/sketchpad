@@ -178,7 +178,7 @@ spec:
             - containerPort: 8000
           env:
             - name: SERVER_URL
-              value: "https://thehome-sketchpad.kempenich.dev"
+              value: "https://sketchpad.kempenich.ai"
             - name: DATA_DIR
               value: "/data"
             - name: STATE_DIR
@@ -339,14 +339,14 @@ Walk through each test step interactively, reporting what happens at each step.
 
 ### Pitfall 1: GitHub OAuth App Callback URL Mismatch
 **What goes wrong:** The OAuth flow fails because the GitHub OAuth App's callback URL doesn't match the server's production URL.
-**Why it happens:** During Phase 2, the callback URL was changed to the local dev tunnel (`themac-sketchpad.kempenich.dev/auth/callback`). For production, it needs to point to `thehome-sketchpad.kempenich.dev/auth/callback`.
-**How to avoid:** As a manual step during deployment, update the GitHub OAuth App callback URL to `https://thehome-sketchpad.kempenich.dev/auth/callback`. Note: the correct path is `/auth/callback` (FastMCP's default), NOT `/github/callback` (which was incorrectly documented in Phase 1's `docs/github-oauth-app.md`).
+**Why it happens:** During Phase 2, the callback URL was changed to the local dev tunnel (`sketchpad.kempenich.dev/auth/callback`). For production, it needs to point to `sketchpad.kempenich.ai/auth/callback`.
+**How to avoid:** As a manual step during deployment, update the GitHub OAuth App callback URL to `https://sketchpad.kempenich.ai/auth/callback`. Note: the correct path is `/auth/callback` (FastMCP's default), NOT `/github/callback` (which was incorrectly documented in Phase 1's `docs/github-oauth-app.md`).
 **Warning signs:** OAuth flow opens browser but returns error about redirect_uri mismatch.
 
 ### Pitfall 2: Callback URL Path Discrepancy in Docs
 **What goes wrong:** The `docs/github-oauth-app.md` from Phase 1 says the callback path is `/github/callback`, but FastMCP actually uses `/auth/callback`.
 **Why it happens:** Phase 1 docs were written before the server was built. Phase 2 research and local-development.md correctly document `/auth/callback`.
-**How to avoid:** Fix the callback URL in `docs/02-github-oauth-app.md` during the doc consolidation. The correct URL is `https://thehome-sketchpad.kempenich.dev/auth/callback`.
+**How to avoid:** Fix the callback URL in `docs/02-github-oauth-app.md` during the doc consolidation. The correct URL is `https://sketchpad.kempenich.ai/auth/callback`.
 **Warning signs:** Phase 1 doc says `/github/callback`, Phase 2 doc and server code say `/auth/callback`.
 
 ### Pitfall 3: Placeholder Service Port Conflict
@@ -379,7 +379,7 @@ Walk through each test step interactively, reporting what happens at each step.
 ```bash
 # Source: https://code.claude.com/docs/en/mcp
 # Add the server with HTTP transport (OAuth handled automatically)
-claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.dev/mcp
+claude mcp add --transport http sketchpad https://sketchpad.kempenich.ai/mcp
 
 # Authenticate via OAuth (opens browser)
 # Inside Claude Code:
@@ -397,7 +397,7 @@ claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.de
 ```
 1. Go to https://claude.ai/settings/connectors
 2. Click "Add custom connector"
-3. Enter URL: https://thehome-sketchpad.kempenich.dev/mcp
+3. Enter URL: https://sketchpad.kempenich.ai/mcp
 4. Give it a name (e.g., "Sketchpad")
 5. Complete OAuth flow in browser (GitHub login)
 6. The connector syncs automatically to Claude mobile apps
@@ -450,11 +450,11 @@ The existing `test_oauth.py` already reads `SERVER_URL` from `.env` and uses it 
 
 ```bash
 # Option 1: Temporarily update .env
-# Set SERVER_URL=https://thehome-sketchpad.kempenich.dev in .env
+# Set SERVER_URL=https://sketchpad.kempenich.ai in .env
 uv run python test_oauth.py
 
 # Option 2: Override via environment variable
-SERVER_URL=https://thehome-sketchpad.kempenich.dev uv run python test_oauth.py
+SERVER_URL=https://sketchpad.kempenich.ai uv run python test_oauth.py
 ```
 
 **Note:** The test script reads `.env` via `dotenv_values()`, but the env var approach (Option 2) would need a small code change since `dotenv_values()` reads the file, not the environment. The simpler approach is to update `.env` temporarily or add a CLI argument.
@@ -484,23 +484,23 @@ The layer-by-layer verification approach maps to this sequence:
 5. **Verify:** `kubectl get pods -n sketchpad` shows `sketchpad-xxxxx` pod Running
 
 ### Layer 2: Tunnel Connectivity
-1. **Verify:** `curl -sf https://thehome-sketchpad.kempenich.dev/.well-known/oauth-authorization-server` returns OAuth metadata JSON
+1. **Verify:** `curl -sf https://sketchpad.kempenich.ai/.well-known/oauth-authorization-server` returns OAuth metadata JSON
 2. If it fails: check Service port mapping, cloudflared logs, tunnel dashboard
 
 ### Layer 3: OAuth Flow
-1. Update GitHub OAuth App callback URL to `https://thehome-sketchpad.kempenich.dev/auth/callback`
-2. Update `.env` SERVER_URL to `https://thehome-sketchpad.kempenich.dev`
+1. Update GitHub OAuth App callback URL to `https://sketchpad.kempenich.ai/auth/callback`
+2. Update `.env` SERVER_URL to `https://sketchpad.kempenich.ai`
 3. Run `uv run python test_oauth.py`
 4. **Verify:** All checks pass (or expected SKIPs for refresh tokens with GitHub provider)
 
 ### Layer 4: Claude Code CLI
-1. `claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.dev/mcp`
+1. `claude mcp add --transport http sketchpad https://sketchpad.kempenich.ai/mcp`
 2. In Claude Code: `/mcp` -> Authenticate -> GitHub login
 3. Use `/test-sketchpad` skill to verify read/write/read-back
 4. **Verify:** All three tool calls succeed
 
 ### Layer 5: Phone / Claude.ai
-1. Go to claude.ai/settings/connectors -> Add custom connector -> URL: `https://thehome-sketchpad.kempenich.dev/mcp`
+1. Go to claude.ai/settings/connectors -> Add custom connector -> URL: `https://sketchpad.kempenich.ai/mcp`
 2. Complete OAuth in browser
 3. Open Claude AI on phone, start new conversation
 4. Ask Claude to read the sketchpad, write something, read it back
@@ -551,7 +551,7 @@ The layer-by-layer verification approach maps to this sequence:
 **Manual-only justification for E2E-01, E2E-02:** These require human interaction with Claude AI on a phone -- cannot be automated. The `/test-sketchpad` skill provides a semi-automated proxy when run from Claude Code CLI.
 
 ### Sampling Rate
-- **Per task commit:** `kubectl get pods -n sketchpad` + `curl -sf https://thehome-sketchpad.kempenich.dev/.well-known/oauth-authorization-server`
+- **Per task commit:** `kubectl get pods -n sketchpad` + `curl -sf https://sketchpad.kempenich.ai/.well-known/oauth-authorization-server`
 - **Per wave merge:** `uv run python test_oauth.py` against live URL
 - **Phase gate:** Full E2E from Claude Code CLI + phone test before `/gsd:verify-work`
 

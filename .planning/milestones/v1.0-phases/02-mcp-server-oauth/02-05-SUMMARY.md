@@ -39,7 +39,7 @@ key-decisions:
   - "Steps 4-7 auto-approved per AUTO_CFG=true -- subsequently verified by user in parallel session"
   - "OAUTH_PROVIDER env var + factory pattern for provider extensibility"
   - "test-oauth.sh → test_oauth.py -- bash couldn't handle SSE from Streamable HTTP"
-  - "Named tunnel 'TheMac' with permanent hostname themac-sketchpad.kempenich.dev"
+  - "Named tunnel 'TheMac' with permanent hostname sketchpad.kempenich.dev"
   - "GitHub doesn't issue refresh tokens -- AUTH-05/AUTH-06 are provider-specific, correctly SKIPped"
 
 patterns-established:

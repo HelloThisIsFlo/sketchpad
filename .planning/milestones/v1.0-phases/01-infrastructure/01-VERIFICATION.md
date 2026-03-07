@@ -13,7 +13,7 @@ human_verification:
   - test: "kubectl get secret -n sketchpad"
     expected: "github-oauth, encryption-key, and cloudflared-tunnel-token all listed"
     why_human: "Kubernetes Secrets are not stored in the repo; requires live kubectl access"
-  - test: "curl -sf https://thehome-sketchpad.kempenich.dev/"
+  - test: "curl -sf https://sketchpad.kempenich.ai/"
     expected: "HTTP 200 with body {\"status\":\"ok\",\"service\":\"sketchpad\",\"phase\":\"infrastructure-placeholder\"}"
     why_human: "Public endpoint reachability requires live Cloudflare Tunnel and running cluster pods"
   - test: "kubectl get pods -n sketchpad -l app=cloudflared"
@@ -59,11 +59,11 @@ These truths map to the 7 Success Criteria defined in ROADMAP.md for Phase 1. Cl
 |---|-------------------|--------|----------|
 | 1 | `kubectl get storageclass` shows working StorageClass; `kubectl get pvc` shows PVCs as Bound | NEEDS HUMAN | 01-02-SUMMARY self-check reports both PVCs Bound; requires live verification |
 | 2 | `kubectl get secret` shows GitHub OAuth, Cloudflare token, encryption keys present | NEEDS HUMAN | 01-02-SUMMARY self-check confirms all 3 secrets; requires live verification |
-| 3 | `curl -I https://thehome-sketchpad.kempenich.dev/` returns HTTP response (Cloudflare Tunnel routing) | NEEDS HUMAN | 01-02-SUMMARY reports HTTP 200 JSON health check; requires live curl |
+| 3 | `curl -I https://sketchpad.kempenich.ai/` returns HTTP response (Cloudflare Tunnel routing) | NEEDS HUMAN | 01-02-SUMMARY reports HTTP 200 JSON health check; requires live curl |
 | 4 | Container image pushed to registry and `kubectl` can pull it | NEEDS HUMAN | GitHub Actions CI workflow exists (.github/workflows/build.yaml); requires live docker pull |
 | 5 | cloudflared Deployment Running with active tunnel connection | NEEDS HUMAN | 01-02-SUMMARY reports Running with 4 QUIC connections; requires live kubectl |
 | 6 | `docs/github-oauth-app.md` exists with step-by-step guide for GitHub OAuth App | VERIFIED | File exists; contains callback URL, numbered steps, Client ID/Secret copy instructions |
-| 7 | `docs/cloudflare-tunnel.md` exists with config snippet and hostname setup instructions | VERIFIED | File exists; contains `thehome-sketchpad.kempenich.dev` routing and service URL format |
+| 7 | `docs/cloudflare-tunnel.md` exists with config snippet and hostname setup instructions | VERIFIED | File exists; contains `sketchpad.kempenich.ai` routing and service URL format |
 
 **File-based score:** 7/7 truths verified
 **Cluster-state score:** Requires human confirmation (5 truths)
@@ -81,9 +81,9 @@ These truths map to the 7 Success Criteria defined in ROADMAP.md for Phase 1. Cl
 | `k8s/secrets/README.md` | kubectl create secret commands for all three secrets | VERIFIED | All 3 `kubectl create secret` commands present; no actual values; "Never commit" warning |
 | `Dockerfile` | Container image definition for ghcr.io | VERIFIED | `FROM python:3.12-slim`, EXPOSE 8000, CMD python http.server |
 | `requirements.txt` | Empty deps file for build layer caching | VERIFIED | Present (confirmed in git commit 065aba5) |
-| `docs/github-oauth-app.md` | Step-by-step GitHub OAuth App creation guide | VERIFIED | Contains callback URL `https://thehome-sketchpad.kempenich.dev/github/callback` |
+| `docs/github-oauth-app.md` | Step-by-step GitHub OAuth App creation guide | VERIFIED | Contains callback URL `https://sketchpad.kempenich.ai/github/callback` |
 | `docs/synology-nfs.md` | Synology NFS share setup guide targeting DSM 7.2 | VERIFIED | Contains Hyper Backup section |
-| `docs/cloudflare-tunnel.md` | Cloudflare Tunnel creation and hostname routing guide | VERIFIED | Contains `thehome-sketchpad.kempenich.dev` service URL reference |
+| `docs/cloudflare-tunnel.md` | Cloudflare Tunnel creation and hostname routing guide | VERIFIED | Contains `sketchpad.kempenich.ai` service URL reference |
 | `.github/workflows/build.yaml` | GitHub Actions CI workflow for ghcr.io image builds | VERIFIED | Builds on push to main; uses GITHUB_TOKEN; pushes `latest` and `sha-*` tags |
 
 **All 11 file artifacts: VERIFIED**
@@ -157,7 +157,7 @@ Scanned `k8s/` and `docs/` directories for TODO, FIXME, XXX, HACK, PLACEHOLDER p
 
 ### 3. Public HTTPS Endpoint Reachable
 
-**Test:** Run `curl -sf https://thehome-sketchpad.kempenich.dev/`
+**Test:** Run `curl -sf https://sketchpad.kempenich.ai/`
 **Expected:** HTTP 200 with body `{"status":"ok","service":"sketchpad","phase":"infrastructure-placeholder"}`
 **Why human:** Requires live Cloudflare Tunnel, running cloudflared pod, and running nginx placeholder pod
 

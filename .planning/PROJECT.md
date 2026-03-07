@@ -86,7 +86,7 @@ OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 | PVC for persistence | HostPath too fragile, PVC is K8s-standard | Good -- NFS-backed, survives restarts |
 | Cloudflare Tunnel for ingress | Bypasses CGNAT, already used for other services | Good -- zero port forwarding needed |
 | OAUTH_PROVIDER env var + factory | Server extensible for future OAuth providers | Good -- clean architecture |
-| Named tunnel "TheMac" | Permanent hostname avoids re-configuring callback URL | Good -- themac-sketchpad.kempenich.dev |
+| Named tunnel "TheMac" | Permanent hostname avoids re-configuring callback URL | Good -- sketchpad.kempenich.dev |
 | FastMCP 3.1.0 with GitHubProvider | Eliminates hand-rolled OAuth 2.1 (~500 lines saved) | Good -- DCR + RFC 9728 bugs fixed |
 | FileTreeStore + Fernet encryption | No Redis sidecar needed for OAuth state persistence | Good -- PVC-backed, encrypted at rest |
 | Two separate PVCs | sketchpad-data + sketchpad-state vs shared subPath | Good -- clean separation |

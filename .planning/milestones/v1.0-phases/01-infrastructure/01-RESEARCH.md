@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phase 1 provisions all Kubernetes infrastructure for the Sketchpad MCP server: an NFS-backed StorageClass using `nfs-subdir-external-provisioner` with a Synology NAS backend, a `cloudflared` Deployment creating a Cloudflare Tunnel to expose the service at `thehome-sketchpad.kempenich.dev`, Kubernetes Secrets for GitHub OAuth credentials and encryption keys, a container image pushed to GitHub Container Registry (ghcr.io), and an nginx placeholder to verify the full tunnel chain. Three documentation guides are also produced.
+Phase 1 provisions all Kubernetes infrastructure for the Sketchpad MCP server: an NFS-backed StorageClass using `nfs-subdir-external-provisioner` with a Synology NAS backend, a `cloudflared` Deployment creating a Cloudflare Tunnel to expose the service at `sketchpad.kempenich.ai`, Kubernetes Secrets for GitHub OAuth credentials and encryption keys, a container image pushed to GitHub Container Registry (ghcr.io), and an nginx placeholder to verify the full tunnel chain. Three documentation guides are also produced.
 
 The infrastructure is entirely standard Kubernetes -- no exotic tooling. The NFS provisioner is a well-maintained Helm chart from kubernetes-sigs, cloudflared has an official Kubernetes deployment guide from Cloudflare, and ghcr.io is the natural choice for a GitHub-hosted project. The Talos OS cluster has built-in NFS client support in its kubelet image, so no node-level configuration is needed. The Synology NAS is on the same subnet as cluster nodes, eliminating routing concerns.
 
@@ -17,7 +17,7 @@ The infrastructure is entirely standard Kubernetes -- no exotic tooling. The NFS
 
 ### Locked Decisions
 - Deploy cloudflared as a Kubernetes Deployment in the `sketchpad` namespace (new tunnel, not the existing non-K8s tunnel)
-- Public hostname: `thehome-sketchpad.kempenich.dev`
+- Public hostname: `sketchpad.kempenich.ai`
 - Per-service subdomain pattern -- no ingress controller, cloudflared routes directly to the K8s Service
 - Domain: `kempenich.dev` (managed in Cloudflare), follows existing `thehome-*` naming convention
 - NFS from the start -- not local-path-provisioner
@@ -28,7 +28,7 @@ The infrastructure is entirely standard Kubernetes -- no exotic tooling. The NFS
 - PVC backed by NFS -- data survives pod restarts AND cluster teardown/rebuild
 - Synology NFS share must be added to Hyper Backup for disaster recovery
 - Deploy nginx placeholder pod to verify full tunnel chain (cloudflared -> Service -> Pod)
-- Proves `curl https://thehome-sketchpad.kempenich.dev/` returns HTTP response before Phase 2
+- Proves `curl https://sketchpad.kempenich.ai/` returns HTTP response before Phase 2
 - Step-by-step guides with exact URLs to each settings page
 - Verification steps after each action ("After saving, you should see...")
 - Target DSM 7.2 for Synology NFS guide
@@ -311,7 +311,7 @@ spec:
 **Warning signs:** PVCs stay in Pending state; provisioner pod logs show RBAC permission errors.
 
 ### Pitfall 3: Cloudflare Tunnel Hostname Not Configured
-**What goes wrong:** cloudflared pod is Running but `curl https://thehome-sketchpad.kempenich.dev/` returns a Cloudflare error page (e.g., 1033).
+**What goes wrong:** cloudflared pod is Running but `curl https://sketchpad.kempenich.ai/` returns a Cloudflare error page (e.g., 1033).
 **Why it happens:** The tunnel was created in the dashboard but no public hostname route was added pointing to the K8s Service.
 **How to avoid:** In the Cloudflare dashboard, after creating the tunnel, add a Public Hostname entry: subdomain `thehome-sketchpad`, domain `kempenich.dev`, service `http://sketchpad.sketchpad.svc.cluster.local:80`. The service URL uses K8s DNS: `<service-name>.<namespace>.svc.cluster.local`.
 **Warning signs:** cloudflared logs show "connected" but HTTP requests to the hostname return Cloudflare error codes.
@@ -407,7 +407,7 @@ kubectl get pods -n sketchpad -l app=cloudflared
 kubectl logs -n sketchpad -l app=cloudflared --tail=20
 
 # Test the public endpoint
-curl -I https://thehome-sketchpad.kempenich.dev/
+curl -I https://sketchpad.kempenich.ai/
 ```
 
 ### Pushing to ghcr.io
@@ -476,7 +476,7 @@ docker push ghcr.io/<owner>/sketchpad:latest
 | INFRA-02 | Sketchpad PVC is Bound | smoke | `kubectl get pvc sketchpad-data -n sketchpad -o jsonpath='{.status.phase}'` (expect "Bound") | N/A |
 | INFRA-03 | OAuth state PVC is Bound | smoke | `kubectl get pvc sketchpad-state -n sketchpad -o jsonpath='{.status.phase}'` (expect "Bound") | N/A |
 | INFRA-04 | Secrets exist | smoke | `kubectl get secret github-oauth encryption-key cloudflared-tunnel-token -n sketchpad` | N/A |
-| INFRA-05 | HTTPS endpoint reachable | integration | `curl -sf -o /dev/null -w '%{http_code}' https://thehome-sketchpad.kempenich.dev/` (expect "200") | N/A |
+| INFRA-05 | HTTPS endpoint reachable | integration | `curl -sf -o /dev/null -w '%{http_code}' https://sketchpad.kempenich.ai/` (expect "200") | N/A |
 | INFRA-06 | Container image in registry | smoke | `docker pull ghcr.io/<owner>/sketchpad:latest` or verify push log | N/A |
 | DOCS-02 | GitHub OAuth guide exists | file-check | `test -f docs/github-oauth-app.md` | Wave 0 |
 | DOCS-03 | Cloudflare Tunnel guide exists | file-check | `test -f docs/cloudflare-tunnel.md` | Wave 0 |

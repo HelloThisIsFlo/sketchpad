@@ -43,7 +43,7 @@ validated: 2026-03-05
 | 1-02-01 | 02 | 1 | INFRA-02 | smoke | `kubectl get pvc sketchpad-data -n sketchpad -o jsonpath='{.status.phase}'` (expect "Bound") | N/A | ✅ green |
 | 1-02-02 | 02 | 1 | INFRA-03 | smoke | `kubectl get pvc sketchpad-state -n sketchpad -o jsonpath='{.status.phase}'` (expect "Bound") | N/A | ✅ green |
 | 1-03-01 | 03 | 1 | INFRA-04 | smoke | `kubectl get secret github-oauth encryption-key cloudflared-tunnel-token -n sketchpad` | N/A | ✅ green |
-| 1-04-01 | 04 | 2 | INFRA-05 | integration | `curl -sf -o /dev/null -w '%{http_code}' https://thehome-sketchpad.kempenich.dev/` (expect "200") | N/A | ✅ green |
+| 1-04-01 | 04 | 2 | INFRA-05 | integration | `curl -sf -o /dev/null -w '%{http_code}' https://sketchpad.kempenich.ai/` (expect "200") | N/A | ✅ green |
 | 1-05-01 | 05 | 2 | INFRA-06 | smoke | `docker pull ghcr.io/hellothisisflo/sketchpad:latest` or verify CI build log | N/A | ✅ green |
 | 1-06-01 | 06 | 1 | DOCS-02 | file-check | `test -f docs/02-github-oauth-app.md` | ✅ | ✅ green |
 | 1-06-02 | 06 | 1 | DOCS-03 | file-check | `test -f docs/03-cloudflare-tunnel.md` | ✅ | ✅ green |

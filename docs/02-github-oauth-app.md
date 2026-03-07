@@ -23,9 +23,9 @@ Click **"New OAuth App"** (button in the top right).
 | Field | Value |
 |-------|-------|
 | **Application name** | `Sketchpad` (or any name you prefer) |
-| **Homepage URL** | `https://thehome-sketchpad.kempenich.dev` |
+| **Homepage URL** | `https://sketchpad.kempenich.ai` |
 | **Application description** | (optional) MCP server for Claude AI integration |
-| **Authorization callback URL** | `https://thehome-sketchpad.kempenich.dev/auth/callback` |
+| **Authorization callback URL** | `https://sketchpad.kempenich.ai/auth/callback` |
 
 **Important:** The callback URL must match **exactly** what the FastMCP server expects. Phase 2 configures the server with this same URL. If they don't match, the OAuth flow will fail with a redirect_uri mismatch error.
 
@@ -60,7 +60,7 @@ After completing the steps above, verify:
 - The app appears in your list at <https://github.com/settings/developers>
 - The Client ID is visible on the app detail page
 - One client secret is listed (you can see the last 4 characters)
-- The callback URL shows `https://thehome-sketchpad.kempenich.dev/auth/callback`
+- The callback URL shows `https://sketchpad.kempenich.ai/auth/callback`
 
 ## Creating the Kubernetes Secret
 

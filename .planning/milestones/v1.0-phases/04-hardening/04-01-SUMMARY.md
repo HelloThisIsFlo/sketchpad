@@ -7,7 +7,7 @@ tags: [origin-validation, middleware, starlette, cors-alternative, mcp-security]
 # Dependency graph
 requires:
   - phase: 03-deploy-integration
-    provides: Running MCP server on K8s with OAuth auth at thehome-sketchpad.kempenich.dev
+    provides: Running MCP server on K8s with OAuth auth at sketchpad.kempenich.ai
 provides:
   - Origin validation middleware blocking disallowed Origins on /mcp with 403
   - ALLOWED_ORIGINS configurable via environment variable
@@ -57,7 +57,7 @@ completed: 2026-03-05
 - Requests without Origin header pass through to auth (401 without token, not 403)
 - FastMCP's built-in auth returns 401 with WWW-Authenticate for unauthenticated requests
 - Discovery endpoints and /health remain unaffected by Origin checks
-- All 8 security assertions pass against live deployment at thehome-sketchpad.kempenich.dev
+- All 8 security assertions pass against live deployment at sketchpad.kempenich.ai
 
 ## Task Commits
 

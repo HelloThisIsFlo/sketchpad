@@ -14,7 +14,7 @@ import httpx
 
 # -- Configuration -----------------------------------------------------------
 
-SERVER_URL = "https://thehome-sketchpad.kempenich.dev"
+SERVER_URL = "https://sketchpad.kempenich.ai"
 
 JSONRPC_BODY = {"jsonrpc": "2.0", "method": "initialize", "id": 0}
 JSONRPC_HEADERS = {"Content-Type": "application/json"}

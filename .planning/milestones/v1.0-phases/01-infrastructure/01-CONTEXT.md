@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Kubernetes namespace, Secrets, NFS-backed StorageClass, PVC, cloudflared deployment, and Cloudflare Tunnel route yielding a reachable HTTPS endpoint at `thehome-sketchpad.kempenich.dev` — ready to host the MCP server with zero infrastructure surprises. Includes step-by-step setup guides for all manual prerequisites.
+Kubernetes namespace, Secrets, NFS-backed StorageClass, PVC, cloudflared deployment, and Cloudflare Tunnel route yielding a reachable HTTPS endpoint at `sketchpad.kempenich.ai` — ready to host the MCP server with zero infrastructure surprises. Includes step-by-step setup guides for all manual prerequisites.
 
 </domain>
 
@@ -15,7 +15,7 @@ Kubernetes namespace, Secrets, NFS-backed StorageClass, PVC, cloudflared deploym
 
 ### Tunnel & Hostname
 - Deploy cloudflared as a Kubernetes Deployment in the `sketchpad` namespace (new tunnel, not the existing non-K8s tunnel)
-- Public hostname: `thehome-sketchpad.kempenich.dev`
+- Public hostname: `sketchpad.kempenich.ai`
 - Per-service subdomain pattern — no ingress controller, cloudflared routes directly to the K8s Service
 - Domain: `kempenich.dev` (managed in Cloudflare), follows existing `thehome-*` naming convention
 
@@ -30,7 +30,7 @@ Kubernetes namespace, Secrets, NFS-backed StorageClass, PVC, cloudflared deploym
 
 ### Test Endpoint
 - Deploy nginx placeholder pod to verify full tunnel chain (cloudflared -> Service -> Pod)
-- Proves `curl https://thehome-sketchpad.kempenich.dev/` returns HTTP response before Phase 2
+- Proves `curl https://sketchpad.kempenich.ai/` returns HTTP response before Phase 2
 - Placeholder response details: Claude's discretion
 
 ### Documentation

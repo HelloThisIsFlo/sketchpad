@@ -20,7 +20,7 @@ validated: 2026-03-05
 |----------|-------|
 | **Framework** | `test_oauth.py` (custom E2E script) + `test_security.py` (security checks) |
 | **Config file** | `.env` (secrets for OAuth flow) |
-| **Quick run command** | `curl -sf https://thehome-sketchpad.kempenich.dev/health` |
+| **Quick run command** | `curl -sf https://sketchpad.kempenich.ai/health` |
 | **Full suite command** | `uv run python test_oauth.py` (interactive, requires server + tunnel) |
 | **Estimated runtime** | ~15 seconds (automated checks) |
 
@@ -28,7 +28,7 @@ validated: 2026-03-05
 
 ## Sampling Rate
 
-- **After every task commit:** `kubectl get pods -n sketchpad` + `curl -sf https://thehome-sketchpad.kempenich.dev/.well-known/oauth-authorization-server`
+- **After every task commit:** `kubectl get pods -n sketchpad` + `curl -sf https://sketchpad.kempenich.ai/.well-known/oauth-authorization-server`
 - **After every plan wave:** `uv run python test_oauth.py` against live URL
 - **Before `/gsd:verify-work`:** Full E2E from Claude Code CLI + phone test
 - **Max feedback latency:** 15 seconds

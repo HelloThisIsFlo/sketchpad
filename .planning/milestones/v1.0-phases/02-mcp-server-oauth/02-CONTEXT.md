@@ -71,7 +71,7 @@ A locally running FastMCP server that correctly implements the full OAuth 2.1 pr
 
 ### Integration Points
 - GitHub OAuth App created in Phase 1 — credentials available as K8s Secret and in local `.env`
-- Public hostname `thehome-sketchpad.kempenich.dev` configured via Cloudflare Tunnel in Phase 1
+- Public hostname `sketchpad.kempenich.ai` configured via Cloudflare Tunnel in Phase 1
 - PVC at a known mount path provides persistent file storage in K8s
 - FastMCP 3.0.2 with GitHubProvider — the core framework (decided during project init)
 - FileTreeStore + FernetEncryptionWrapper for OAuth state persistence (decided during project init)

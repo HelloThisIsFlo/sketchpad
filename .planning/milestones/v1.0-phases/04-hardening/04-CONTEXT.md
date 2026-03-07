@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Origin validation middleware on the MCP endpoint and verification that token-based auth (from FastMCP/Phase 2) correctly rejects unauthenticated requests. The running server at `thehome-sketchpad.kempenich.dev` rejects malformed or potentially malicious requests while legitimate Claude AI traffic continues working.
+Origin validation middleware on the MCP endpoint and verification that token-based auth (from FastMCP/Phase 2) correctly rejects unauthenticated requests. The running server at `sketchpad.kempenich.ai` rejects malformed or potentially malicious requests while legitimate Claude AI traffic continues working.
 
 </domain>
 
@@ -37,7 +37,7 @@ Origin validation middleware on the MCP endpoint and verification that token-bas
 - 401 responses: Claude's discretion on WWW-Authenticate header conformance with MCP spec (already required by DISC-03 from Phase 2)
 
 ### Verification Approach
-- All security tests hit the public URL (`https://thehome-sketchpad.kempenich.dev`), not localhost — tests the real path including Cloudflare Tunnel
+- All security tests hit the public URL (`https://sketchpad.kempenich.ai`), not localhost — tests the real path including Cloudflare Tunnel
 - Test cases: bad Origin (expect 403), no Origin (expect pass), no token (expect 401), valid request (expect success)
 - Full E2E retest after hardening: re-run Claude Code test skill AND phone test to prove hardening didn't break the happy path
 - Test script organization and test skill updates: Claude's discretion
@@ -77,7 +77,7 @@ Origin validation middleware on the MCP endpoint and verification that token-bas
 - FastMCP likely supports Starlette middleware for request interception — research needed
 - Origin middleware must not interfere with FastMCP's own request handling (OAuth endpoints, SSE, etc.)
 - Phase 3's test-oauth.sh accepts server URL parameter — security tests should follow the same pattern
-- Public hostname: `thehome-sketchpad.kempenich.dev` (configured in Phase 1)
+- Public hostname: `sketchpad.kempenich.ai` (configured in Phase 1)
 
 ### Known Issues to Consider
 - Cloudflare Tunnel may strip, modify, or add headers — verify Origin header passes through unchanged

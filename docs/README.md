@@ -11,10 +11,10 @@ just deploy
 
 # Verify
 kubectl get pods -n sketchpad
-curl -sf https://thehome-sketchpad.kempenich.dev/health
+curl -sf https://sketchpad.kempenich.ai/health
 
 # Add to Claude Code
-claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.dev/mcp
+claude mcp add --transport http sketchpad https://sketchpad.kempenich.ai/mcp
 # Then: /mcp -> Authenticate -> GitHub login
 ```
 

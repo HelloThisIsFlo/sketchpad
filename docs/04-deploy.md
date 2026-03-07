@@ -56,7 +56,7 @@ You should see a `sketchpad-<hash>` pod with status `Running`.
 ### Health Endpoint
 
 ```bash
-curl -sf https://thehome-sketchpad.kempenich.dev/health
+curl -sf https://sketchpad.kempenich.ai/health
 ```
 
 Expected: `{"status":"ok","service":"sketchpad"}`
@@ -64,7 +64,7 @@ Expected: `{"status":"ok","service":"sketchpad"}`
 ### OAuth Discovery
 
 ```bash
-curl -sf https://thehome-sketchpad.kempenich.dev/.well-known/oauth-authorization-server | python3 -m json.tool
+curl -sf https://sketchpad.kempenich.ai/.well-known/oauth-authorization-server | python3 -m json.tool
 ```
 
 Should return OAuth metadata with `authorization_endpoint`, `token_endpoint`, etc.

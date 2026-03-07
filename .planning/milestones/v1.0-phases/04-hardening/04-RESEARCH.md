@@ -27,7 +27,7 @@ The MCP specification (2025-06-18 revision) explicitly requires: "Servers MUST v
 - This is a personal learning project -- debuggability over minimal info leakage
 - Log every rejection with timestamp, Origin/IP, and reason (visible via `kubectl logs`)
 - No CORS headers -- Claude AI is not a browser, CORS adds unnecessary complexity
-- All security tests hit the public URL (`https://thehome-sketchpad.kempenich.dev`), not localhost -- tests the real path including Cloudflare Tunnel
+- All security tests hit the public URL (`https://sketchpad.kempenich.ai`), not localhost -- tests the real path including Cloudflare Tunnel
 - Test cases: bad Origin (expect 403), no Origin (expect pass), no token (expect 401), valid request (expect success)
 - Full E2E retest after hardening: re-run Claude Code test skill AND phone test to prove hardening didn't break the happy path
 
@@ -329,7 +329,7 @@ against the live deployment at the public URL.
 import httpx
 import sys
 
-SERVER_URL = "https://thehome-sketchpad.kempenich.dev"
+SERVER_URL = "https://sketchpad.kempenich.ai"
 
 def test_bad_origin():
     """Request with malicious Origin should be rejected with 403."""

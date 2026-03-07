@@ -36,7 +36,7 @@ spec:
           env:
             # --- Inline values ---
             - name: SERVER_URL
-              value: "https://thehome-sketchpad.kempenich.dev"
+              value: "https://sketchpad.kempenich.ai"
             - name: DATA_DIR
               value: "/data"
             - name: STATE_DIR

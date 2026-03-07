@@ -1,10 +1,10 @@
 # Setting Up Cloudflare Tunnel for Sketchpad
 
-This guide creates a Cloudflare Tunnel that routes internet traffic to the sketchpad service running in your Kubernetes cluster. The tunnel provides HTTPS access at `thehome-sketchpad.kempenich.dev` without exposing any inbound ports on your network.
+This guide creates a Cloudflare Tunnel that routes internet traffic to the sketchpad service running in your Kubernetes cluster. The tunnel provides HTTPS access at `sketchpad.kempenich.ai` without exposing any inbound ports on your network.
 
 ## Prerequisites
 
-- A Cloudflare account with the `kempenich.dev` domain
+- A Cloudflare account with the `kempenich.ai` domain
 - Access to the Cloudflare Zero Trust dashboard
 
 ## Steps
@@ -53,8 +53,8 @@ Add a public hostname with these settings:
 
 | Field | Value |
 |-------|-------|
-| **Subdomain** | `thehome-sketchpad` |
-| **Domain** | `kempenich.dev` |
+| **Subdomain** | `sketchpad` |
+| **Domain** | `kempenich.ai` |
 | **Path** | (leave empty) |
 | **Service type** | HTTP |
 | **Service URL** | `sketchpad.sketchpad.svc.cluster.local:80` |
@@ -106,7 +106,7 @@ The cloudflared Deployment manifest is at `k8s/cloudflared/deployment.yaml`. It 
 
 4. Test the public endpoint:
    ```bash
-   curl https://thehome-sketchpad.kempenich.dev/
+   curl https://sketchpad.kempenich.ai/
    ```
    You should receive the JSON placeholder response:
    ```json
@@ -118,8 +118,8 @@ The cloudflared Deployment manifest is at `k8s/cloudflared/deployment.yaml`. It 
 ```
 Internet                  Cloudflare Edge           Your Cluster
 --------                  ---------------           ------------
-User/Claude AI  --->  thehome-sketchpad.    --->  cloudflared pod
-                      kempenich.dev                    |
+User/Claude AI  --->  sketchpad.            --->  cloudflared pod
+                      kempenich.ai                     |
                       (HTTPS termination)              v
                                                   Service: sketchpad
                                                   (ClusterIP, port 80)
@@ -151,7 +151,7 @@ Common causes:
 The tunnel is connected but the hostname route is misconfigured. In the Cloudflare dashboard:
 1. Go to **Networks** > **Tunnels** > **sketchpad** > **Public Hostname**
 2. Verify the service URL is `http://sketchpad.sketchpad.svc.cluster.local:80`
-3. Verify the subdomain is `thehome-sketchpad` and domain is `kempenich.dev`
+3. Verify the subdomain is `sketchpad` and domain is `kempenich.ai`
 
 ### curl returns 502 Bad Gateway
 

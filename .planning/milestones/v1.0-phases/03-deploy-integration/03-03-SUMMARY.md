@@ -58,7 +58,7 @@ completed: 2026-03-04
 - **Files modified:** 2
 
 ## Accomplishments
-- MCP server pod Running on Kubernetes, reachable at https://thehome-sketchpad.kempenich.dev
+- MCP server pod Running on Kubernetes, reachable at https://sketchpad.kempenich.ai
 - Health endpoint returns `{"status":"ok","service":"sketchpad"}` through Cloudflare Tunnel
 - OAuth discovery, 401 challenge, and Dynamic Client Registration all pass against live URL
 - Claude Code test skill created with read/write/read-back walkthrough steps
@@ -121,7 +121,7 @@ Each task was committed atomically:
 
 **GitHub OAuth App callback URL must be updated for production:**
 1. Go to https://github.com/settings/developers -> OAuth Apps -> Sketchpad
-2. Change "Authorization callback URL" to: `https://thehome-sketchpad.kempenich.dev/auth/callback`
+2. Change "Authorization callback URL" to: `https://sketchpad.kempenich.ai/auth/callback`
 3. Save
 
 This is required before Claude Code CLI can complete the OAuth flow.

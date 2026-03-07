@@ -49,7 +49,7 @@ Click **"+ Create Credentials"** → **"OAuth client ID"**.
 |-------|-------|
 | **Application type** | `Web application` |
 | **Name** | `Sketchpad` (or any name you prefer) |
-| **Authorized redirect URIs** | `https://themac-sketchpad.kempenich.dev/auth/callback` |
+| **Authorized redirect URIs** | `https://sketchpad.kempenich.dev/auth/callback` |
 
 Leave **Authorized JavaScript origins** empty.
 
@@ -71,7 +71,7 @@ Copy both and save them somewhere safe.
 After completing the steps above, verify:
 
 - The credential appears in the Credentials page at <https://console.cloud.google.com/apis/credentials>
-- Clicking the credential shows the correct Authorized redirect URI: `https://themac-sketchpad.kempenich.dev/auth/callback`
+- Clicking the credential shows the correct Authorized redirect URI: `https://sketchpad.kempenich.dev/auth/callback`
 - The Client ID and Client Secret are saved somewhere accessible
 
 ## Using with Sketchpad

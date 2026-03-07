@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Deploy the MCP server to Kubernetes, make it reachable over HTTPS via Cloudflare Tunnel at `thehome-sketchpad.kempenich.dev`, and confirm Claude AI (via Claude Code CLI and phone) completes the full OAuth handshake and can call both file tools. Includes consolidated documentation with setup guides and a local Claude Code test skill.
+Deploy the MCP server to Kubernetes, make it reachable over HTTPS via Cloudflare Tunnel at `sketchpad.kempenich.ai`, and confirm Claude AI (via Claude Code CLI and phone) completes the full OAuth handshake and can call both file tools. Includes consolidated documentation with setup guides and a local Claude Code test skill.
 
 </domain>
 
@@ -81,7 +81,7 @@ Deploy the MCP server to Kubernetes, make it reachable over HTTPS via Cloudflare
 - Phase 2 delivers: Python server code with Dockerfile, test-oauth.sh, .env.example
 - Phase 3 creates: K8s Deployment + Service manifests, Makefile, docs/ folder, Claude Code test skill
 - Container registry: ghcr.io (public repo)
-- Public hostname: `thehome-sketchpad.kempenich.dev`
+- Public hostname: `sketchpad.kempenich.ai`
 
 ### Known Issues to Handle
 - FastMCP DCR grant_types bug (issue #2460) — try first, workaround if needed

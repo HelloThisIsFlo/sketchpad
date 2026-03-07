@@ -7,7 +7,7 @@ Connect Claude AI to the Sketchpad MCP server. Covers both the Claude Code CLI a
 Add the server and authenticate:
 
 ```bash
-claude mcp add --transport http sketchpad https://thehome-sketchpad.kempenich.dev/mcp
+claude mcp add --transport http sketchpad https://sketchpad.kempenich.ai/mcp
 ```
 
 Then inside Claude Code, run `/mcp` and select "Authenticate" for sketchpad. Complete the GitHub login in your browser. Once authenticated, Claude Code can call the sketchpad tools.
@@ -18,7 +18,7 @@ Connectors added via claude.ai sync automatically to the Claude mobile apps.
 
 1. Go to <https://claude.ai/settings/connectors>
 2. Click "Add custom connector"
-3. Enter URL: `https://thehome-sketchpad.kempenich.dev/mcp`
+3. Enter URL: `https://sketchpad.kempenich.ai/mcp`
 4. Give it a name (e.g., "Sketchpad")
 5. Complete the OAuth flow in your browser (GitHub login)
 
@@ -38,7 +38,7 @@ All three should succeed. If you set up the Claude Code test skill (`.claude/ski
 
 ### OAuth redirect mismatch
 
-The GitHub OAuth App's callback URL must be `https://thehome-sketchpad.kempenich.dev/auth/callback`. Check the app settings at <https://github.com/settings/developers>. Note: the correct path is `/auth/callback`, not `/github/callback`.
+The GitHub OAuth App's callback URL must be `https://sketchpad.kempenich.ai/auth/callback`. Check the app settings at <https://github.com/settings/developers>. Note: the correct path is `/auth/callback`, not `/github/callback`.
 
 ### `about:blank` in browser during OAuth
 

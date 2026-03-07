@@ -78,15 +78,20 @@ Note the **Tunnel UUID** printed in the output -- you'll need it for the config 
 
 #### 4c. Add a DNS Route for Sketchpad
 
-```bash
-cloudflared tunnel route dns "TheMac" themac-sketchpad.kempenich.dev
-```
+In the Cloudflare dashboard, go to the DNS settings for `kempenich.dev` and create a CNAME record:
 
-This creates a CNAME record pointing `themac-sketchpad.kempenich.dev` to the tunnel.
+| Field | Value |
+|-------|-------|
+| **Type** | `CNAME` |
+| **Name** | `sketchpad` |
+| **Target** | `<TUNNEL_UUID>.cfargotunnel.com` |
+| **Proxy status** | Proxied (orange cloud) |
 
-You can add more routes later for other local services (e.g., `themac-other.kempenich.dev`).
+Replace `<TUNNEL_UUID>` with the UUID from step 4b. This points `sketchpad.kempenich.dev` to the TheMac tunnel.
 
-**Verification:** `dig themac-sketchpad.kempenich.dev +short` returns Cloudflare proxy IPs (e.g., `104.21.x.x`, `172.67.x.x`). Note: Cloudflare flattens the CNAME into A records, so you won't see a CNAME even though one was created.
+You can add more routes later for other local services (e.g., `other-service.kempenich.dev`).
+
+**Verification:** `dig sketchpad.kempenich.dev +short` returns Cloudflare proxy IPs (e.g., `104.21.x.x`, `172.67.x.x`). Cloudflare flattens the CNAME into A records, so you won't see a CNAME even though one was created.
 
 #### 4d. Create the Tunnel Config
 
@@ -97,10 +102,10 @@ tunnel: <TUNNEL_UUID>
 credentials-file: /Users/<you>/.cloudflared/<TUNNEL_UUID>.json
 
 ingress:
-  - hostname: themac-sketchpad.kempenich.dev
+  - hostname: sketchpad.kempenich.dev
     service: http://localhost:8000
   # Add more local services here, e.g.:
-  # - hostname: themac-other.kempenich.dev
+  # - hostname: other-service.kempenich.dev
   #   service: http://localhost:3000
   - service: http_status:404
 ```
@@ -122,7 +127,7 @@ Each tunnel gets its own named config file (e.g., `config-dadhome.yml`). The sym
 Set `SERVER_URL` in `.env` to your permanent tunnel URL:
 
 ```
-SERVER_URL=https://themac-sketchpad.kempenich.dev
+SERVER_URL=https://sketchpad.kempenich.dev
 ```
 
 ### 6. Set the GitHub OAuth App Callback URL
@@ -132,12 +137,12 @@ Go to **[https://github.com/settings/developers](https://github.com/settings/dev
 Set the **Authorization callback URL** to:
 
 ```
-https://themac-sketchpad.kempenich.dev/auth/callback
+https://sketchpad.kempenich.dev/auth/callback
 ```
 
 This is a one-time step. The URL will never change because the named tunnel has a fixed hostname.
 
-**Verification:** The callback URL on the GitHub OAuth App page shows `https://themac-sketchpad.kempenich.dev/auth/callback`.
+**Verification:** The callback URL on the GitHub OAuth App page shows `https://sketchpad.kempenich.dev/auth/callback`.
 
 ### 7. Set the GitHub Credentials in `.env`
 
@@ -170,7 +175,7 @@ uv run python -m sketchpad
 
 The server starts on `http://localhost:8000` and reads all config from `.env`.
 
-**Verification:** Visit `https://themac-sketchpad.kempenich.dev/.well-known/oauth-authorization-server` in your browser. You should see the OAuth metadata JSON.
+**Verification:** Visit `https://sketchpad.kempenich.dev/.well-known/oauth-authorization-server` in your browser. You should see the OAuth metadata JSON.
 
 ### Running the E2E Test
 
@@ -185,7 +190,7 @@ The script guides you through setup — it will prompt you to confirm the server
 ```
 Your Machine                      Cloudflare Edge              GitHub
 ------------                      ---------------              ------
-MCP server (port 8000)  <----  themac-sketchpad.       GitHub OAuth
+MCP server (port 8000)  <----  sketchpad.              GitHub OAuth
        ^                       kempenich.dev           (callback URL set once)
        |                       (HTTPS termination)          |
 cloudflared tunnel run              ^                       |

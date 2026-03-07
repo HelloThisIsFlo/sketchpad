@@ -12,7 +12,7 @@ provides:
   - Running cloudflared tunnel with 4 QUIC connections to Cloudflare edge
   - NFS-backed PVCs (sketchpad-data, sketchpad-state) both Bound
   - Kubernetes secrets (github-oauth, encryption-key, cloudflared-tunnel-token)
-  - Public HTTPS endpoint at thehome-sketchpad.kempenich.dev returning JSON health check
+  - Public HTTPS endpoint at sketchpad.kempenich.ai returning JSON health check
   - Container image at ghcr.io/hellothisisflo/sketchpad:latest via GitHub Actions CI
 affects: [phase-2, phase-3]
 
@@ -44,7 +44,7 @@ completed: 2026-03-04
 
 # Phase 1 Plan 2: Deploy Infrastructure Summary
 
-**NFS-backed PVCs, Kubernetes secrets, cloudflared tunnel, and nginx placeholder deployed to cluster with public HTTPS endpoint verified at thehome-sketchpad.kempenich.dev, plus GitHub Actions CI for ghcr.io image builds**
+**NFS-backed PVCs, Kubernetes secrets, cloudflared tunnel, and nginx placeholder deployed to cluster with public HTTPS endpoint verified at sketchpad.kempenich.ai, plus GitHub Actions CI for ghcr.io image builds**
 
 ## Performance
 
@@ -117,7 +117,7 @@ None -- all user setup was completed in Task 1 (checkpoint:human-action).
 
 ## Next Phase Readiness
 - Infrastructure fully operational: namespace, storage, secrets, tunnel, placeholder
-- Public endpoint verified at https://thehome-sketchpad.kempenich.dev/
+- Public endpoint verified at https://sketchpad.kempenich.ai/
 - Container image pipeline active: push to main triggers build and push to ghcr.io
 - Phase 2 can build the FastMCP server locally, then Phase 3 updates the Deployment to use the real image
 - PVCs ready for mounting by the MCP server Deployment
