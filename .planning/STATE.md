@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Multi-Users
-status: shipped
-stopped_at: Milestone v1.1 archived
-last_updated: "2026-03-07T17:50:00.000Z"
-last_activity: 2026-03-07 -- Milestone v1.1 archived and tagged
+milestone: v1.2
+milestone_name: Tool Polish
+status: active
+stopped_at: null
+last_updated: "2026-03-18T00:00:00.000Z"
+last_activity: 2026-03-18 -- Milestone v1.2 started
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-07)
+See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** Planning next milestone
+**Current focus:** v1.2 Tool Polish
 
 ## Current Position
 
-Milestone: v1.1 Multi-Users -- SHIPPED
-Next: `/gsd:new-milestone` to define v1.2+ scope
-
-Progress: [SHIPPED] v1.0 + v1.1 complete (7 phases, 17 plans)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-18 — Milestone v1.2 started
 
 ## Performance Metrics
 
@@ -66,6 +66,6 @@ Full decision log in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-07
-Stopped at: Milestone v1.1 archived
+Last session: 2026-03-18
+Stopped at: Milestone v1.2 started — defining requirements
 Resume file: None

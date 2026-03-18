@@ -26,7 +26,10 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 
 ### Active
 
-(None -- define in next milestone via `/gsd:new-milestone`)
+<!-- Current scope: v1.2 Tool Polish -->
+
+- [ ] Validate write_file mode parameter against allowed values; change default to "append"
+- [ ] Reframe tool descriptions from user-facing notepad to inter-agent persistence layer
 
 ### Out of Scope
 
@@ -41,6 +44,16 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 - Consent UI / approval screen -- single-user personal server
 - OIDC / OpenID Connect -- RFC 8414 metadata is sufficient
 - Identity linking across providers -- provider switch = new sketchpad (accepted)
+
+## Context
+
+## Current Milestone: v1.2 Tool Polish
+
+**Goal:** Harden the tool API — validate inputs and clarify tool descriptions for agent consumption.
+
+**Target features:**
+- Mode parameter validation with `Literal` type annotation
+- Inter-agent persistence framing in tool docstrings
 
 ## Context
 
@@ -103,4 +116,4 @@ OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 | CI test+lint gates | Tests and lint must pass before Docker build | Good -- prevents broken images |
 
 ---
-*Last updated: 2026-03-07 after v1.1 milestone*
+*Last updated: 2026-03-18 after v1.2 milestone start*
