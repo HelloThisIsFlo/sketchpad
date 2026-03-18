@@ -5,9 +5,9 @@ milestone_name: Tool Polish
 status: active
 stopped_at: null
 last_updated: "2026-03-18T00:00:00.000Z"
-last_activity: 2026-03-18 -- Milestone v1.2 started
+last_activity: 2026-03-18 -- Roadmap created for v1.2
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my server
-**Current focus:** v1.2 Tool Polish
+**Current focus:** v1.2 Tool Polish -- Phase 8: Parameter Validation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-18 — Milestone v1.2 started
+Phase: 8 of 9 (Parameter Validation)
+Plan: --
+Status: Ready to plan
+Last activity: 2026-03-18 -- Roadmap created for v1.2
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -57,8 +59,8 @@ Full decision log in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-- Validate write_file mode parameter (api) — `.planning/todos/pending/2026-03-07-validate-write-file-mode-parameter.md`
-- Update tool descriptions to inter-agent persistence framing (api) — `.planning/todos/pending/2026-03-18-update-tool-descriptions-to-inter-agent-persistence-framing.md`
+- Validate write_file mode parameter (api) -- `.planning/todos/pending/2026-03-07-validate-write-file-mode-parameter.md`
+- Update tool descriptions to inter-agent persistence framing (api) -- `.planning/todos/pending/2026-03-18-update-tool-descriptions-to-inter-agent-persistence-framing.md`
 
 ### Blockers/Concerns
 
@@ -67,5 +69,5 @@ Full decision log in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Milestone v1.2 started — defining requirements
+Stopped at: Roadmap created for v1.2 -- ready to plan Phase 8
 Resume file: None
