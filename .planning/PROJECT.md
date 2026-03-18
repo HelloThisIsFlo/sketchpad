@@ -45,8 +45,6 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 - OIDC / OpenID Connect -- RFC 8414 metadata is sufficient
 - Identity linking across providers -- provider switch = new sketchpad (accepted)
 
-## Context
-
 ## Current Milestone: v1.2 Tool Polish
 
 **Goal:** Harden the tool API — validate inputs and clarify tool descriptions for agent consumption.
