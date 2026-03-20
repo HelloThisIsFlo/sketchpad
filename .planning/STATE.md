@@ -60,6 +60,7 @@ Full decision log in PROJECT.md Key Decisions table.
 
 - Validate write_file mode parameter (api) -- `.planning/todos/pending/2026-03-07-validate-write-file-mode-parameter.md`
 - Update tool descriptions to inter-agent persistence framing (api) -- `.planning/todos/pending/2026-03-18-update-tool-descriptions-to-inter-agent-persistence-framing.md`
+- Append mode should add newline between writes (api) -- `.planning/todos/pending/2026-03-20-append-mode-should-add-newline-between-writes.md`
 
 ### Blockers/Concerns
 
