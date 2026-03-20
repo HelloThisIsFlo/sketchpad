@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Literal
 
 from fastmcp.server.dependencies import get_access_token
 
@@ -44,7 +45,7 @@ def register_tools(mcp):
         return content
 
     @mcp.tool
-    def write_file(content: str, mode: str = "replace") -> str:
+    def write_file(content: str, mode: Literal["replace", "append"] = "append") -> str:
         """Write to your personal sketchpad. Use this for notes, drafts,
         ideas -- Markdown formatting recommended but not required. Your
         sketchpad is shared across all your AI agents that use the same
@@ -52,7 +53,7 @@ def register_tools(mcp):
 
         Args:
             content: The text to write.
-            mode: 'replace' (default) overwrites the file; 'append' adds to the end.
+            mode: 'append' (default) adds to the end; 'replace' overwrites the file.
         """
         sketchpad_path = _get_user_sketchpad_path()
         sketchpad_path.parent.mkdir(parents=True, exist_ok=True)
