@@ -84,7 +84,7 @@ def test_default_mode_is_append(tmp_data_dir, mcp_with_tools):
         write_fn(content=" second")
         result = read_fn()
 
-    assert result == "first second"
+    assert result == "first\n second"
 
 
 # ---------------------------------------------------------------------------
