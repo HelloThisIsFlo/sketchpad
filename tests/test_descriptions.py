@@ -7,7 +7,6 @@ import pytest
 
 from sketchpad.tools import register_tools
 
-
 # ---------------------------------------------------------------------------
 # Test helpers -- same pattern as test_parameter_validation.py
 # ---------------------------------------------------------------------------

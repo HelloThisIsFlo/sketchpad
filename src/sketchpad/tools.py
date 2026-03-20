@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastmcp.server.dependencies import get_access_token
+from pydantic import Field
 
 from sketchpad.config import get_config
 from sketchpad.user_identity import resolve_user_dir
@@ -33,9 +34,11 @@ def register_tools(mcp):
 
     @mcp.tool
     def read_file() -> str:
-        """Read your personal sketchpad. This is your private Markdown file,
-        shared across all your AI agents (Claude, Cursor, etc.) that use
-        the same GitHub identity."""
+        """Read the Sketchpad -- a shared persistence layer for AI agents
+        authenticated with the same GitHub identity.
+
+        Contains content written by any agent session on this account.
+        Read when the user asks you to check for prior context."""
         sketchpad_path = _get_user_sketchpad_path()
         if not sketchpad_path.exists():
             return WELCOME_MESSAGE
@@ -45,16 +48,19 @@ def register_tools(mcp):
         return content
 
     @mcp.tool
-    def write_file(content: str, mode: Literal["replace", "append"] = "append") -> str:
-        """Write to your personal sketchpad. Use this for notes, drafts,
-        ideas -- Markdown formatting recommended but not required. Your
-        sketchpad is shared across all your AI agents that use the same
-        GitHub identity.
+    def write_file(
+        content: Annotated[str, Field(description="The text to write. Markdown formatting recommended.")],
+        mode: Annotated[
+            Literal["replace", "append"],
+            Field(description="append (default) adds to the end with a newline separator; replace overwrites the entire file."),
+        ] = "append",
+    ) -> str:
+        """Write to the Sketchpad -- a shared persistence layer for AI agents
+        authenticated with the same GitHub identity.
 
-        Args:
-            content: The text to write.
-            mode: 'append' (default) adds to the end; 'replace' overwrites the file.
-        """
+        Do: write ONLY when the user explicitly asks you to save something here.
+        Do NOT: write here to save content for the user to read (use artifacts or files instead).
+        Do NOT: write unprompted or proactively."""
         sketchpad_path = _get_user_sketchpad_path()
         sketchpad_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -66,7 +72,8 @@ def register_tools(mcp):
             existing_size = (
                 sketchpad_path.stat().st_size if sketchpad_path.exists() else 0
             )
-            resulting_size = existing_size + content_bytes
+            separator_bytes = 1 if existing_size > 0 else 0
+            resulting_size = existing_size + separator_bytes + content_bytes
         else:
             resulting_size = content_bytes
 
@@ -91,7 +98,10 @@ def register_tools(mcp):
                 if sketchpad_path.exists()
                 else ""
             )
-            sketchpad_path.write_text(existing + content, encoding="utf-8")
+            if existing:
+                sketchpad_path.write_text(existing + "\n" + content, encoding="utf-8")
+            else:
+                sketchpad_path.write_text(content, encoding="utf-8")
         else:
             sketchpad_path.write_text(content, encoding="utf-8")
 
