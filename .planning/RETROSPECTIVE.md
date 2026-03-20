@@ -85,14 +85,53 @@
 
 ---
 
+## Milestone: v1.2 — Tool Polish
+
+**Shipped:** 2026-03-20
+**Phases:** 2 | **Plans:** 2 | **Total execution:** 5min
+
+### What Was Built
+- write_file mode constrained to Literal["replace", "append"] with Pydantic validation (Phase 8)
+- Default mode changed from replace to append — safer for inter-agent persistence
+- Tool descriptions reframed as "shared persistence layer for AI agents" with Do/Do NOT guardrails (Phase 9)
+- Field(description=...) annotations on content and mode parameters visible in JSON schema
+- Newline separator in append mode between successive writes
+
+### What Worked
+- **Smallest possible scope** — 2 phases, 2 plans, 5min total. Pure API polish with zero infrastructure changes. Clean audit on first run.
+- **Literal over Enum** — research found Enum generates $ref/$defs schemas that some MCP clients handle poorly (SDK #1373). Literal produces flat `enum` directly in the property — better compatibility for less complexity.
+- **TDD continued from v1.1** — 15 new tests (4 Phase 8 + 11 Phase 9) caught the exact behaviors before implementation. Both phases hit GREEN on first try.
+- **Research-driven scoping** — Phase 9 research found that ToolAnnotations and examples-in-descriptions add no value for Claude AI. Saved time by not implementing them.
+
+### What Was Inefficient
+- **ROADMAP progress table stale** — Phase 8 and 9 showed "0/1" and "Not started" in the progress table despite being complete. The executor should update the table on plan completion. Minor discrepancy, caught during milestone completion.
+
+### Patterns Established
+- `Annotated[Type, Field(description=...)]` for parameter-level JSON schema descriptions
+- Docstrings for tool-level guidance (what/when/when-not), Field for parameter-level descriptions
+- `tool.run()` (not `tool.fn()`) for testing Pydantic validation paths
+
+### Key Lessons
+1. **Literal > Enum for MCP tool parameters** — Enum generates $ref/$defs JSON schema that not all MCP clients handle well. Literal produces clean inline enum.
+2. **Default-safe principle** — changing default mode from replace to append means accidental calls can't destroy data. All existing tests still passed because first-writes to non-existent files behave identically.
+3. **Research before building is especially valuable for "should we even build this?"** — Phase 9 research eliminated ToolAnnotations and examples from scope entirely, saving a full phase of work.
+
+### Cost Observations
+- Model mix: ~80% opus, ~20% sonnet (research agents)
+- Total execution: 5min across 2 plans
+- Notable: Average 2.5min/plan — fastest milestone. Well-scoped polish with no unknowns.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
 | Milestone | Execution Time | Phases | Key Change |
 |-----------|---------------|--------|------------|
-| v1.0 | 41min | 4 | First milestone -- established yolo + fine granularity workflow |
+| v1.0 | 41min | 4 | First milestone — established yolo + fine granularity workflow |
 | v1.1 | 11min | 3 | TDD red-green pattern, Nyquist validation, audit-before-ship |
+| v1.2 | 5min | 2 | Research-driven scoping eliminated unnecessary work |
 
 ### Cumulative Quality
 
@@ -100,9 +139,11 @@
 |-----------|-------------|----------|-------------|
 | v1.0 | 32/32 | 100% | Passed (0 gaps, 0 tech debt) |
 | v1.1 | 8/8 | 100% | Passed (0 gaps, 0 tech debt) |
+| v1.2 | 7/7 | 100% | Passed (0 gaps, 0 tech debt) |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. Trivial business logic isolates infrastructure/auth problems -- keep spikes simple
-2. Gap closure plans are cheaper than shipping with gaps -- audit early
-3. TDD plans execute faster (2.2min avg vs 3.4min) -- structured approach reduces ambiguity
+1. Trivial business logic isolates infrastructure/auth problems — keep spikes simple
+2. Gap closure plans are cheaper than shipping with gaps — audit early
+3. TDD plans execute faster (2.2min avg vs 3.4min) — structured approach reduces ambiguity
+4. Research-driven scoping saves more time than execution optimization — eliminating a phase is cheaper than making it fast

@@ -23,13 +23,12 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 - v1.1: Per-user sketchpad isolation via OAuth username (ISOL-01..04)
 - v1.1: Per-user (20KB) and global (50MB) storage limits (STOR-01..02)
 - v1.1: Justfile replaces Makefile with CI gates (BUILD-01..02)
+- v1.2: write_file mode validated with Literal type + Pydantic; default changed to append (VALID-01..04)
+- v1.2: Tool descriptions reframed as inter-agent persistence layer with Field annotations (DESC-01..03)
 
 ### Active
 
-<!-- Current scope: v1.2 Tool Polish -->
-
-- [x] Validate write_file mode parameter against allowed values; change default to "append" — Validated in Phase 8: Parameter Validation
-- [x] Reframe tool descriptions from user-facing notepad to inter-agent persistence layer — Validated in Phase 9: Description Update
+(None — next milestone not yet defined)
 
 ### Out of Scope
 
@@ -45,17 +44,14 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 - OIDC / OpenID Connect -- RFC 8414 metadata is sufficient
 - Identity linking across providers -- provider switch = new sketchpad (accepted)
 
-## Current Milestone: v1.2 Tool Polish
+## Current State
 
-**Goal:** Harden the tool API — validate inputs and clarify tool descriptions for agent consumption.
-
-**Target features:**
-- Mode parameter validation with `Literal` type annotation
-- Inter-agent persistence framing in tool docstrings
+**Latest shipped:** v1.2 Tool Polish (2026-03-20)
+**Next milestone:** Not yet defined — use `/gsd:new-milestone` to start
 
 ## Context
 
-Shipped v1.1 with 1,816 LOC Python.
+Shipped v1.2 with 2,152 LOC Python.
 Tech stack: FastMCP 3.1.0, Python, Kubernetes (Talos OS), Cloudflare Tunnel, GitHub OAuth, Justfile, Ruff.
 50 tests covering path traversal defense, tool isolation, auth enforcement, schema safety, storage limits, parameter validation, and tool descriptions.
 OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
@@ -112,6 +108,10 @@ OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 | Ruff for lint+format | Single tool replaces flake8+isort+black | Good -- fast, configured in pyproject.toml |
 | Just replaces Make | Modern command runner with better syntax | Good -- 10 recipes, recipe groups |
 | CI test+lint gates | Tests and lint must pass before Docker build | Good -- prevents broken images |
+| Literal over Enum for mode | Flat JSON schema enum (no $ref/$defs that MCP clients handle poorly) | Good -- SDK #1373 avoided |
+| Append as default mode | Safer for inter-agent persistence (won't overwrite by accident) | Good -- all existing tests pass |
+| Field annotations over Args docstring | Field(description=...) visible in JSON schema; Args section was duplicate | Good -- single source of truth |
+| Simple newline separator | Always `\n` between appends; double newlines are valid Markdown paragraph breaks | Good -- predictable behavior |
 
 ---
-*Last updated: 2026-03-20 after Phase 9 completion*
+*Last updated: 2026-03-20 after v1.2 milestone*

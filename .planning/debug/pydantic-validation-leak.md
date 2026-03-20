@@ -1,5 +1,5 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "Investigate how Pydantic validation errors are surfaced to MCP clients when write_file is called with an invalid mode value"
 created: 2026-03-20T00:00:00Z
 updated: 2026-03-20T00:00:00Z
@@ -89,6 +89,6 @@ root_cause: |
 
   The useful part ("Input should be 'replace' or 'append'") is buried in this noise.
 
-fix: (not applied -- diagnosis only)
-verification: (not applicable)
+fix: Discarded — accepted as framework behavior (FastMCP/MCP SDK responsibility, not worth wrapping)
+verification: N/A
 files_changed: []

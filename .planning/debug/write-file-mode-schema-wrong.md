@@ -1,5 +1,5 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "Investigate why the MCP tools/list schema for write_file shows mode as string with default replace instead of enum with default append"
 created: 2026-03-20T17:05:00Z
 updated: 2026-03-20T17:15:00Z
@@ -77,6 +77,6 @@ started: After commit 81e7c61 changed the parameter but before a new Docker imag
 ## Resolution
 
 root_cause: The deployed Docker image was built from a commit prior to 81e7c61, which still had the original `mode: str = "replace"` signature. The current code (with `Literal["replace", "append"] = "append"`) has never been deployed. This is a stale deployment, not a serialization bug.
-fix: Rebuild and redeploy the Docker image from the current HEAD
-verification: N/A — diagnosis only
+fix: Rebuilt and redeployed Docker image from current HEAD (done manually by user)
+verification: Confirmed tools/list returns correct enum and default
 files_changed: []
