@@ -58,10 +58,10 @@ Plans:
   1. Claude AI on the live server reads and writes the sketchpad without unexpected refusals after description change
   2. The JSON schema for `content` and `mode` parameters includes human-readable `description` fields
   3. Tool descriptions include explicit usage guidelines (when to persist) and limitations (what NOT to store)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 09-01: TBD
+- [ ] 09-01-PLAN.md — Rewrite docstrings + Field annotations + newline separator (DESC-01..03)
 
 ## Progress
 
@@ -78,7 +78,7 @@ Phases execute in numeric order: 8 -> 9
 | 6. Storage Limits | v1.1 | 1/1 | Complete | 2026-03-06 |
 | 7. Build Tooling Migration | v1.1 | 2/2 | Complete | 2026-03-06 |
 | 8. Parameter Validation | v1.2 | 0/1 | Not started | - |
-| 9. Description Update | v1.2 | 0/? | Not started | - |
+| 9. Description Update | v1.2 | 0/1 | Not started | - |
 
 _Full v1.0 details: `.planning/milestones/v1.0-ROADMAP.md`_
 _Full v1.1 details: `.planning/milestones/v1.1-ROADMAP.md`_
