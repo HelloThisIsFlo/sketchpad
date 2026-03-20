@@ -61,7 +61,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 09-01-PLAN.md — Rewrite docstrings + Field annotations + newline separator (DESC-01..03)
+- [x] 09-01-PLAN.md — Rewrite docstrings + Field annotations + newline separator (DESC-01..03)
 
 ## Progress
 

@@ -16,9 +16,9 @@ Requirements for v1.2 Tool Polish. Each maps to roadmap phases.
 
 ### Tool Descriptions
 
-- [ ] **DESC-01**: `read_file` and `write_file` docstrings reframed as inter-agent persistence layer
-- [ ] **DESC-02**: `content` and `mode` parameters have `Field(description=...)` annotations visible in JSON schema
-- [ ] **DESC-03**: Tool descriptions include usage guidelines (when to use) and limitations (when NOT to use)
+- [x] **DESC-01**: `read_file` and `write_file` docstrings reframed as inter-agent persistence layer
+- [x] **DESC-02**: `content` and `mode` parameters have `Field(description=...)` annotations visible in JSON schema
+- [x] **DESC-03**: Tool descriptions include usage guidelines (when to use) and limitations (when NOT to use)
 
 ## Future Requirements
 
@@ -43,9 +43,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VALID-02 | Phase 8 | Complete |
 | VALID-03 | Phase 8 | Complete |
 | VALID-04 | Phase 8 | Complete |
-| DESC-01 | Phase 9 | Pending |
-| DESC-02 | Phase 9 | Pending |
-| DESC-03 | Phase 9 | Pending |
+| DESC-01 | Phase 9 | Complete |
+| DESC-02 | Phase 9 | Complete |
+| DESC-03 | Phase 9 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 7 total
