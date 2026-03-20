@@ -32,7 +32,14 @@ def _calculate_dir_size(directory: Path) -> int:
 def register_tools(mcp):
     """Register read_file and write_file tools on the given FastMCP instance."""
 
-    @mcp.tool
+    @mcp.tool(
+        annotations={
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        }
+    )
     def read_file() -> str:
         """Read the Sketchpad -- a shared persistence layer for AI agents
         authenticated with the same GitHub identity.
@@ -47,7 +54,14 @@ def register_tools(mcp):
 
         return content
 
-    @mcp.tool
+    @mcp.tool(
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        }
+    )
     def write_file(
         content: Annotated[str, Field(description="The text to write. Markdown formatting recommended.")],
         mode: Annotated[
