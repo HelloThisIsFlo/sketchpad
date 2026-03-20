@@ -1,8 +1,6 @@
 """Tests for write_file mode parameter validation (VALID-01..04)."""
 
 import asyncio
-import inspect
-from pathlib import Path
 from typing import Literal, get_type_hints
 from unittest.mock import patch
 
@@ -10,7 +8,6 @@ import pytest
 from pydantic import ValidationError
 
 from sketchpad.tools import register_tools
-
 
 # ---------------------------------------------------------------------------
 # Test helpers -- same pattern as test_user_isolation.py
