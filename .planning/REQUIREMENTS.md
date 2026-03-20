@@ -9,10 +9,10 @@ Requirements for v1.2 Tool Polish. Each maps to roadmap phases.
 
 ### Parameter Validation
 
-- [ ] **VALID-01**: `write_file` mode parameter constrained to `Literal["replace", "append"]` -- invalid values rejected before function body
-- [ ] **VALID-02**: Default mode changed from `"replace"` to `"append"` -- safer default for persistence use case
-- [ ] **VALID-03**: JSON schema includes `{"enum": ["replace", "append"]}` for mode parameter -- verified by test
-- [ ] **VALID-04**: Invalid mode value rejected with clear error via `tool.run()` -- verified by test
+- [x] **VALID-01**: `write_file` mode parameter constrained to `Literal["replace", "append"]` -- invalid values rejected before function body
+- [x] **VALID-02**: Default mode changed from `"replace"` to `"append"` -- safer default for persistence use case
+- [x] **VALID-03**: JSON schema includes `{"enum": ["replace", "append"]}` for mode parameter -- verified by test
+- [x] **VALID-04**: Invalid mode value rejected with clear error via `tool.run()` -- verified by test
 
 ### Tool Descriptions
 
@@ -39,10 +39,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VALID-01 | Phase 8 | Pending |
-| VALID-02 | Phase 8 | Pending |
-| VALID-03 | Phase 8 | Pending |
-| VALID-04 | Phase 8 | Pending |
+| VALID-01 | Phase 8 | Complete |
+| VALID-02 | Phase 8 | Complete |
+| VALID-03 | Phase 8 | Complete |
+| VALID-04 | Phase 8 | Complete |
 | DESC-01 | Phase 9 | Pending |
 | DESC-02 | Phase 9 | Pending |
 | DESC-03 | Phase 9 | Pending |
