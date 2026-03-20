@@ -28,7 +28,7 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 
 <!-- Current scope: v1.2 Tool Polish -->
 
-- [ ] Validate write_file mode parameter against allowed values; change default to "append"
+- [x] Validate write_file mode parameter against allowed values; change default to "append" — Validated in Phase 8: Parameter Validation
 - [ ] Reframe tool descriptions from user-facing notepad to inter-agent persistence layer
 
 ### Out of Scope
@@ -57,7 +57,7 @@ OAuth 2.1 authentication (DCR + PKCE) works correctly between Claude AI and my s
 
 Shipped v1.1 with 1,816 LOC Python.
 Tech stack: FastMCP 3.1.0, Python, Kubernetes (Talos OS), Cloudflare Tunnel, GitHub OAuth, Justfile, Ruff.
-35 tests covering path traversal defense, tool isolation, auth enforcement, schema safety, storage limits.
+39 tests covering path traversal defense, tool isolation, auth enforcement, schema safety, storage limits, parameter validation.
 OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 
 **The real goal:** Access an Obsidian vault from Claude AI on a phone. Sketchpad proved the full infrastructure chain works. Swap in vault tools for the next project.
@@ -114,4 +114,4 @@ OAuth 2.1 chain proven end-to-end from Claude AI on phone and CLI.
 | CI test+lint gates | Tests and lint must pass before Docker build | Good -- prevents broken images |
 
 ---
-*Last updated: 2026-03-18 after v1.2 milestone start*
+*Last updated: 2026-03-20 after Phase 8 completion*
