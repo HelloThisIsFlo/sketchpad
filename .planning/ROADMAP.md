@@ -45,10 +45,10 @@
   2. Calling `write_file` without specifying `mode` appends content (not replaces)
   3. The JSON schema returned by `tools/list` shows `{"enum": ["replace", "append"]}` for the mode parameter
   4. All existing tests pass without modification (or with minimal explicit `mode=` additions where intent is replace)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01-PLAN.md — Literal type annotation + append default + validation tests (VALID-01..04)
 
 ### Phase 9: Description Update
 **Goal**: AI agents reading tool descriptions understand the sketchpad as a shared persistence layer and know when to use (and not use) each tool
@@ -77,7 +77,7 @@ Phases execute in numeric order: 8 -> 9
 | 5. Per-User Storage Isolation | v1.1 | 2/2 | Complete | 2026-03-06 |
 | 6. Storage Limits | v1.1 | 1/1 | Complete | 2026-03-06 |
 | 7. Build Tooling Migration | v1.1 | 2/2 | Complete | 2026-03-06 |
-| 8. Parameter Validation | v1.2 | 0/? | Not started | - |
+| 8. Parameter Validation | v1.2 | 0/1 | Not started | - |
 | 9. Description Update | v1.2 | 0/? | Not started | - |
 
 _Full v1.0 details: `.planning/milestones/v1.0-ROADMAP.md`_
