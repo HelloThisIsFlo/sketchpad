@@ -11,7 +11,7 @@ Walk through each test step interactively, reporting what happens at each step.
 
 1. **Read current content**: Call the `read_file` tool from the Sketchpad server. Report what you see (the current content or a welcome message if empty).
 
-2. **Write new content**: Call `write_file` with test content that includes a timestamp (e.g., "Test from Claude Code at [current time]"). Report the result.
+2. **Write new content**: Call `write_file` with test content that includes a timestamp (e.g., "Test from agent at [current time]"). Report the result.
 
 3. **Read back**: Call `read_file` again. Verify the content matches what was written in step 2.
 
